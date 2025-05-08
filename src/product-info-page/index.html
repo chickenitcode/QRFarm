@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Farm Product Details</title>
+    <style>
+        /* Responsive design */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .product-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .product-header {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        .product-info {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+        }
+        .product-label {
+            font-weight: bold;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo h1 {
+            color: #0a7ea4;
+            margin: 0;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            padding: 20px;
+        }
+        .notes {
+            margin-top: 15px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>QR Farm</h1>
+            <p>Product Information</p>
+        </div>
+        
+        <div id="product-display" class="product-card">
+            <div class="product-header">
+                <h2 id="product-id">Loading product information...</h2>
+            </div>
+            <div id="product-content">
+                <!-- Product data will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get product ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            
+            if (!productId) {
+                // Check if it's in the path like /product/PROD-123
+                const pathParts = window.location.pathname.split('/');
+                const pathProductId = pathParts[pathParts.length - 1];
+                
+                if (pathProductId && pathProductId.startsWith('PROD-')) {
+                    displayProductInfo(pathProductId);
+                } else {
+                    showError("No product ID found in URL");
+                }
+            } else {
+                displayProductInfo(productId);
+            }
+        });
+
+        function displayProductInfo(productId) {
+            // In a real app, this would fetch from a server
+            // For demo, we'll check localStorage first (when testing locally)
+            let productData = null;
+            
+            try {
+                // Try to get from localStorage (for testing)
+                const storedData = localStorage.getItem(`product_${productId}`);
+                if (storedData) {
+                    productData = JSON.parse(storedData);
+                }
+            } catch (e) {
+                console.log('Local storage not available or error:', e);
+            }
+            
+            // If not in localStorage, fetch from server in a real app
+            if (!productData) {
+                // For demo - use mock data if ID format matches demo
+                if (productId.startsWith('PROD-MOCK')) {
+                    productData = getMockProduct(productId);
+                } else {
+                    // In a real app, you would fetch from server:
+                    // fetch('/api/products/' + productId)
+                    //    .then(response => response.json())
+                    //    .then(data => renderProduct(data))
+                    //    .catch(error => showError("Error loading product data"));
+                    showError("Product not found. In a real app, this would fetch from a server.");
+                    return;
+                }
+            }
+            
+            renderProduct(productData);
+        }
+        
+        function renderProduct(product) {
+            document.getElementById('product-id').textContent = `Product: ${product.id}`;
+            
+            const content = document.getElementById('product-content');
+            content.innerHTML = `
+                <div class="product-info">
+                    <span class="product-label">Weight:</span>
+                    <span>${product.weight} kg</span>
+                    
+                    <span class="product-label">Size:</span>
+                    <span>${product.size} cm</span>
+                    
+                    ${product.quality ? `
+                    <span class="product-label">Quality:</span>
+                    <span>${product.quality}</span>
+                    ` : ''}
+                    
+                    <span class="product-label">Shipment ID:</span>
+                    <span>${product.parentId}</span>
+                </div>
+                
+                ${product.additionalNotes ? `
+                <div class="notes">
+                    <h3>Additional Notes:</h3>
+                    <p>${product.additionalNotes}</p>
+                </div>
+                ` : ''}
+            `;
+        }
+        
+        function showError(message) {
+            const productDisplay = document.getElementById('product-display');
+            productDisplay.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+        
+        function getMockProduct(id) {
+            // Mock data for demonstration
+            return {
+                id: id,
+                parentId: 'SHIP-MOCK-001',
+                weight: 2.5,
+                size: '15x10',
+                quality: 'A+',
+                additionalNotes: 'This is a mock product for demonstration purposes.'
+            };
+        }
+    </script>
+</body>
+</html>

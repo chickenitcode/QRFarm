@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
 import * as Haptics from 'expo-haptics';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useLocalSearchParams, router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { Float } from 'react-native/Libraries/Types/CodegenTypes';
 
 interface ChildProductData {
   id: string;
@@ -71,14 +70,28 @@ export default function AddChildProductScreen() {
         parentId: shipmentId,
       };
       
-      // Create QR data
-      const qrData = JSON.stringify(fullChildData);
-      setQrValue(qrData);
-      setShowProductQR(true);
-      setShowShipmentQR(false); // Hide shipment QR if visible
-      
-      // Save to mock database (in a real app, this would be a DB call)
+      // Save product data to your backend
       saveChildProductToDatabase(fullChildData);
+      
+      // For local testing, also save to localStorage if running in a web environment
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem(`product_${uniqueId}`, JSON.stringify(fullChildData));
+        } catch (e) {
+          console.log('Could not save to localStorage:', e);
+        }
+      }
+      
+      // Create QR URL pointing to your product info page
+      // Change this URL to wherever you host your page
+      const qrUrl = `https://yourwebsite.com/product-info/?id=${uniqueId}`;
+      
+      // For local testing
+      // const qrUrl = `http://localhost:8000/?id=${uniqueId}`;
+      
+      setQrValue(qrUrl);
+      setShowProductQR(true);
+      setShowShipmentQR(false);
       
       // Increase the product count
       setProductCount(prev => prev + 1);
@@ -97,12 +110,22 @@ export default function AddChildProductScreen() {
     }
   };
 
+  // Function to save product data to your backend
   const saveChildProductToDatabase = (product: ChildProductData) => {
-    // In a real app, this would save to a database and update the parent
-    console.log('Saving child product to database:', product);
+    // In a real app, this would call your API to save to a database
+    console.log('Saving product to database:', product);
     
-    // For demo purposes, we'll just log it
-    // A real implementation would use Firebase, SQLite, or your preferred database
+    // Example API call:
+    // fetch('https://yourapi.com/products', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(product),
+    // })
+    // .then(response => response.json())
+    // .then(data => console.log('Product saved:', data))
+    // .catch(error => console.error('Error saving product:', error));
   };
 
   const addAnotherProduct = () => {
@@ -135,8 +158,8 @@ export default function AddChildProductScreen() {
     // Save the updated shipment to database
     updateShipmentInDatabase(updatedShipment)
       .then(() => {
-        // Set the final shipment QR code with updated quantity
-        const finalShipmentQR = JSON.stringify(updatedShipment);
+        // Set the final shipment QR URL instead of embedding data
+        const shipmentQrUrl = `https://qrfarm.app/shipment/${shipmentId}`;
         
         // Show success alert with options to view QR or go home
         Alert.alert(
@@ -148,7 +171,7 @@ export default function AddChildProductScreen() {
               onPress: () => {
                 // Show the final shipment QR code
                 setShowQR(false);
-                setShipmentQRValue(finalShipmentQR);
+                setShipmentQRValue(shipmentQrUrl);
                 setShowShipmentQR(true);
               } 
             },
@@ -328,10 +351,10 @@ export default function AddChildProductScreen() {
                 Product QR Generated - ID: {productId}
               </ThemedText>
               <ThemedText style={styles.infoText}>
-                Weight: {childProduct.weight}kg, Size: {childProduct.size}cm
+                Scan to view full product details
               </ThemedText>
-              <ThemedText style={styles.infoText}>
-                Part of Shipment: {shipmentId}
+              <ThemedText style={styles.urlText}>
+                {qrValue}
               </ThemedText>
               
               <View style={styles.actionButtonsContainer}>
@@ -496,6 +519,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: '#0a7ea4',
     textAlign: 'center',
+  },
+  urlText: {
+    marginTop: 6,
+    fontSize: 12,
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 16,
   },
 });
 
