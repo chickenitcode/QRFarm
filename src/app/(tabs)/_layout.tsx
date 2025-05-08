@@ -55,6 +55,21 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="camera.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="scan-for-update"
+        options={{
+          title: 'Update Product',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="qrcode" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="update-product"
+        options={{
+          title: 'Update Product',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="qrcode" color={color} />,
+          href: null, // This makes it not directly accessible from tabs
+        }}
+      />
     </Tabs>
   );
 }

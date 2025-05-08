@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Farm Product Details</title>
+    <title>Product Journey | QR Farm</title>
     <style>
-        /* Responsive design */
+        /* Responsive design styles */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -58,13 +58,99 @@
             padding: 10px;
             border-radius: 5px;
         }
+        /* Blockchain journey styling */
+        .blockchain-container {
+            margin-top: 30px;
+        }
+        .block {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .block-arrow {
+            position: absolute;
+            left: 50%;
+            bottom: -20px;
+            transform: translateX(-50%);
+            font-size: 20px;
+            color: #0a7ea4;
+            z-index: 1;
+        }
+        .block-content {
+            margin-top: 10px;
+        }
+        .block-id {
+            font-weight: bold;
+            color: #0a7ea4;
+        }
+        .actor-importer { background-color: #e3f2fd; }
+        .actor-producer { background-color: #e8f5e9; }
+        .actor-trader { background-color: #fff8e1; }
+        .actor-retailer { background-color: #fce4ec; }
+        
+        .hash-container {
+            font-family: monospace;
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+            margin-top: 5px;
+            background-color: #f9f9f9;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #777;
+        }
+        /* Timeline style */
+        .timeline-container {
+            position: relative;
+            padding-left: 20px;
+        }
+        .timeline-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 10px;
+            width: 2px;
+            background-color: #0a7ea4;
+        }
+        .block-dot {
+            position: absolute;
+            left: -5px;
+            top: 15px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #0a7ea4;
+        }
+        /* Link back to batch */
+        .batch-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #0a7ea4;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="logo">
             <h1>QR Farm</h1>
-            <p>Product Information</p>
+            <p>Product Journey Tracker</p>
         </div>
         
         <div id="product-display" class="product-card">
@@ -74,109 +160,208 @@
             <div id="product-content">
                 <!-- Product data will be inserted here -->
             </div>
+            
+            <!-- Link to parent batch (will be populated with JavaScript) -->
+            <div id="batch-link-container" style="margin-top: 20px; text-align: center;"></div>
+        </div>
+        
+        <!-- Product journey visualization -->
+        <div class="blockchain-container">
+            <h2>Product Journey</h2>
+            <p>Track this product's complete journey from producer to consumer:</p>
+            
+            <div id="blockchain-content" class="timeline-container">
+                <div class="timeline-line"></div>
+                <!-- Blocks will be added here -->
+            </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Get product ID from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id');
+            const pathParts = window.location.pathname.split('/');
+            const productId = pathParts[pathParts.length - 1];
             
-            if (!productId) {
-                // Check if it's in the path like /product/PROD-123
-                const pathParts = window.location.pathname.split('/');
-                const pathProductId = pathParts[pathParts.length - 1];
-                
-                if (pathProductId && pathProductId.startsWith('PROD-')) {
-                    displayProductInfo(pathProductId);
-                } else {
-                    showError("No product ID found in URL");
-                }
-            } else {
-                displayProductInfo(productId);
+            if (!productId || !productId.startsWith('PROD-')) {
+                showError("Invalid product ID");
+                return;
             }
-        });
-
-        function displayProductInfo(productId) {
-            // In a real app, this would fetch from a server
-            // For demo, we'll check localStorage first (when testing locally)
-            let productData = null;
             
+            // Fetch product data
+            fetchProductData(productId);
+        });
+        
+        function fetchProductData(productId) {
+            // In a real app, this would be an API call
+            // For demo purposes, we'll try localStorage first
+            
+            let productData = null;
             try {
-                // Try to get from localStorage (for testing)
                 const storedData = localStorage.getItem(`product_${productId}`);
                 if (storedData) {
                     productData = JSON.parse(storedData);
+                    displayProductData(productData);
+                } else {
+                    // If not in localStorage, would fetch from API
+                    fetchFromApi(productId);
                 }
             } catch (e) {
-                console.log('Local storage not available or error:', e);
+                console.error('Error retrieving data:', e);
+                fetchFromApi(productId);
             }
-            
-            // If not in localStorage, fetch from server in a real app
-            if (!productData) {
-                // For demo - use mock data if ID format matches demo
-                if (productId.startsWith('PROD-MOCK')) {
-                    productData = getMockProduct(productId);
-                } else {
-                    // In a real app, you would fetch from server:
-                    // fetch('/api/products/' + productId)
-                    //    .then(response => response.json())
-                    //    .then(data => renderProduct(data))
-                    //    .catch(error => showError("Error loading product data"));
-                    showError("Product not found. In a real app, this would fetch from a server.");
-                    return;
-                }
-            }
-            
-            renderProduct(productData);
         }
         
-        function renderProduct(product) {
+        function fetchFromApi(productId) {
+            // This would be implemented to call your backend API
+            // For demo, show a message
+            showError("Product data not found locally. In a real implementation, this would fetch from your backend API.");
+            
+            // Sample of how the API call would look:
+            // fetch(`https://api.yourdomain.com/products/${productId}`)
+            //   .then(response => {
+            //     if (!response.ok) throw new Error('Product not found');
+            //     return response.json();
+            //   })
+            //   .then(data => displayProductData(data))
+            //   .catch(error => showError(`Error: ${error.message}`));
+        }
+        
+        function displayProductData(product) {
             document.getElementById('product-id').textContent = `Product: ${product.id}`;
             
+            // Get initial block data (producer)
+            const initialBlock = product.blocks && product.blocks.length > 0 
+                ? product.blocks[0] 
+                : null;
+                
+            if (!initialBlock) {
+                showError("Product data is incomplete - no blockchain data found");
+                return;
+            }
+            
+            // Display product details from the initial block
+            const productDetails = initialBlock.data.productDetails;
             const content = document.getElementById('product-content');
+            
             content.innerHTML = `
                 <div class="product-info">
                     <span class="product-label">Weight:</span>
-                    <span>${product.weight} kg</span>
+                    <span>${productDetails.weight} kg</span>
                     
                     <span class="product-label">Size:</span>
-                    <span>${product.size} cm</span>
+                    <span>${productDetails.size} cm</span>
                     
-                    ${product.quality ? `
+                    ${productDetails.quality ? `
                     <span class="product-label">Quality:</span>
-                    <span>${product.quality}</span>
+                    <span>${productDetails.quality}</span>
                     ` : ''}
                     
-                    <span class="product-label">Shipment ID:</span>
-                    <span>${product.parentId}</span>
+                    <span class="product-label">Producer:</span>
+                    <span>${initialBlock.actor}</span>
+                    
+                    <span class="product-label">Origin:</span>
+                    <span>${initialBlock.location}</span>
                 </div>
                 
-                ${product.additionalNotes ? `
+                ${initialBlock.data.notes ? `
                 <div class="notes">
-                    <h3>Additional Notes:</h3>
-                    <p>${product.additionalNotes}</p>
+                    <h3>Producer Notes:</h3>
+                    <p>${initialBlock.data.notes}</p>
                 </div>
                 ` : ''}
             `;
+            
+            // Add link to parent batch/shipment
+            const batchLinkContainer = document.getElementById('batch-link-container');
+            batchLinkContainer.innerHTML = `
+                <a href="/batch/${product.parentId}" class="batch-link">
+                    View Parent Shipment: ${product.parentId}
+                </a>
+            `;
+            
+            // Display the blockchain journey
+            displayBlockchain(product.blocks);
+        }
+        
+        function displayBlockchain(blocks) {
+            if (!blocks || blocks.length === 0) {
+                return;
+            }
+            
+            const blocksContainer = document.getElementById('blockchain-content');
+            
+            // Clear previous content except timeline
+            blocksContainer.innerHTML = '<div class="timeline-line"></div>';
+            
+            // Sort blocks by blockId to ensure proper order
+            const sortedBlocks = [...blocks].sort((a, b) => a.blockId - b.blockId);
+            
+            // Render each block in the chain
+            sortedBlocks.forEach((block, index) => {
+                const isLastBlock = index === sortedBlocks.length - 1;
+                const blockDate = new Date(block.timestamp).toLocaleDateString();
+                const blockTime = new Date(block.timestamp).toLocaleTimeString();
+                
+                const blockEl = document.createElement('div');
+                blockEl.className = `block actor-${block.actorType}`;
+                blockEl.innerHTML = `
+                    <div class="block-dot"></div>
+                    <div class="block-header">
+                        <span class="block-id">${getBlockLabel(block.actorType, block.blockId)}</span>
+                        <span class="timestamp">${blockDate} ${blockTime}</span>
+                    </div>
+                    <div class="block-content">
+                        <p><strong>Actor:</strong> ${block.actor} (${capitalizeFirstLetter(block.actorType)})</p>
+                        <p><strong>Location:</strong> ${block.location}</p>
+                        ${renderBlockData(block.data)}
+                    </div>
+                    <div class="hash-container">
+                        <div><strong>Hash:</strong> ${block.hash}</div>
+                    </div>
+                    ${!isLastBlock ? '<div class="block-arrow">↓</div>' : ''}
+                `;
+                
+                blocksContainer.appendChild(blockEl);
+            });
+        }
+        
+        function getBlockLabel(actorType, blockId) {
+            if (blockId === 0) return "Production";
+            
+            switch(actorType) {
+                case 'importer': return "Import";
+                case 'trader': return "Distribution";
+                case 'retailer': return "Retail";
+                default: return `Step ${blockId + 1}`;
+            }
+        }
+        
+        function renderBlockData(data) {
+            if (!data) return '';
+            
+            // For block 0 (production data)
+            if (data.productDetails) {
+                return `
+                    <p><strong>Action:</strong> Initial production</p>
+                    ${data.notes ? `<p><strong>Notes:</strong> ${data.notes}</p>` : ''}
+                `;
+            }
+            
+            // For other blocks
+            return `
+                <p><strong>Action:</strong> ${capitalizeFirstLetter(data.action || 'handling')}</p>
+                <p><strong>Details:</strong> ${data.details || 'No details provided'}</p>
+            `;
+        }
+        
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
         }
         
         function showError(message) {
             const productDisplay = document.getElementById('product-display');
             productDisplay.innerHTML = `<div class="error-message">${message}</div>`;
-        }
-        
-        function getMockProduct(id) {
-            // Mock data for demonstration
-            return {
-                id: id,
-                parentId: 'SHIP-MOCK-001',
-                weight: 2.5,
-                size: '15x10',
-                quality: 'A+',
-                additionalNotes: 'This is a mock product for demonstration purposes.'
-            };
         }
     </script>
 </body>

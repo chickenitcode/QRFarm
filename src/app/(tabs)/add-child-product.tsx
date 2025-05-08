@@ -16,6 +16,20 @@ interface ChildProductData {
   size: string;
   quality: string; 
   additionalNotes: string;
+  // Blockchain related fields
+  blocks: ProductBlock[];
+}
+
+// New interface for product blocks
+interface ProductBlock {
+  blockId: number;
+  timestamp: number;
+  actor: string;
+  actorType: 'producer' | 'importer' | 'trader' | 'retailer' | 'other';
+  location: string;
+  data: any;
+  prevHash: string;
+  hash: string;
 }
 
 export default function AddChildProductScreen() {
@@ -31,6 +45,7 @@ export default function AddChildProductScreen() {
     size: '',
     quality: '',
     additionalNotes: '',
+    blocks: [],
   });
   
   const [qrValue, setQrValue] = useState('');
@@ -63,17 +78,46 @@ export default function AddChildProductScreen() {
       const uniqueId = `PROD-${shipmentId}-${(productCount + 1).toString().padStart(3, '0')}`;
       setProductId(uniqueId);
       
-      // Create the full child product data
-      const fullChildData: ChildProductData = {
+      // Create initial block (block 0) - producer's information
+      const initialBlockData = {
+        productDetails: {
+          weight: childProduct.weight,
+          size: childProduct.size,
+          quality: childProduct.quality || 'Standard',
+        },
+        shipment: shipmentId,
+        notes: childProduct.additionalNotes || '',
+      };
+      
+      // Calculate hash for the initial block
+      const initialBlockHash = calculateHash(0, 0, JSON.stringify(initialBlockData));
+      
+      const initialBlock: ProductBlock = {
+        blockId: 0,
+        timestamp: Date.now(),
+        actor: 'Producer', // Default for the initial block
+        actorType: 'producer' as 'producer', // Cast to specific union type
+        location: shipmentData?.location || 'Unknown',
+        data: initialBlockData,
+        prevHash: '0', // Genesis block has prevHash of 0
+        hash: initialBlockHash
+      };
+      
+      // Create the full child product data with blockchain structure
+      const fullChildData = {
         ...childProduct,
         id: uniqueId,
         parentId: shipmentId,
+        blocks: [initialBlock]
       };
       
       // Save product data to your backend
       saveChildProductToDatabase(fullChildData);
       
-      // For local testing, also save to localStorage if running in a web environment
+      // Also add this product to the parent shipment's product list
+      addProductToShipment(shipmentId, uniqueId);
+      
+      // For local testing, save to localStorage if available
       if (typeof localStorage !== 'undefined') {
         try {
           localStorage.setItem(`product_${uniqueId}`, JSON.stringify(fullChildData));
@@ -82,12 +126,8 @@ export default function AddChildProductScreen() {
         }
       }
       
-      // Create QR URL pointing to your product info page
-      // Change this URL to wherever you host your page
-      const qrUrl = `https://yourwebsite.com/product-info/?id=${uniqueId}`;
-      
-      // For local testing
-      // const qrUrl = `http://localhost:8000/?id=${uniqueId}`;
+      // Create QR URL using the new pattern for products
+      const qrUrl = `https://yourdomain.com/product/${uniqueId}`;
       
       setQrValue(qrUrl);
       setShowProductQR(true);
@@ -110,6 +150,15 @@ export default function AddChildProductScreen() {
     }
   };
 
+  // Add a simple hash function (in a real app, use a proper cryptographic hash)
+  const calculateHash = (blockId: number, prevHash: string | number, data: string) => {
+    const dataToHash = `${blockId}:${prevHash}:${data}:${Date.now()}`;
+    // This is a simplified hash for demo. Use a proper hash function in production
+    return Array.from(dataToHash)
+      .reduce((hash, char) => hash ^ char.charCodeAt(0) + ((hash << 5) - hash), 0)
+      .toString(16);
+  };
+
   // Function to save product data to your backend
   const saveChildProductToDatabase = (product: ChildProductData) => {
     // In a real app, this would call your API to save to a database
@@ -127,6 +176,29 @@ export default function AddChildProductScreen() {
     // .then(data => console.log('Product saved:', data))
     // .catch(error => console.error('Error saving product:', error));
   };
+  
+  // Add this function to keep track of products in a shipment
+  const addProductToShipment = (shipmentId: string, productId: string) => {
+    try {
+      // In a real app, you would call an API to update the shipment
+      console.log(`Adding product ${productId} to shipment ${shipmentId}`);
+      
+      // For demo purposes, use localStorage to track shipment contents
+      if (typeof localStorage !== 'undefined') {
+        // Get current products in shipment
+        const shipmentProductsKey = `shipment_products_${shipmentId}`;
+        const currentProducts = JSON.parse(localStorage.getItem(shipmentProductsKey) || '[]');
+        
+        // Add the new product
+        currentProducts.push(productId);
+        
+        // Save back to localStorage
+        localStorage.setItem(shipmentProductsKey, JSON.stringify(currentProducts));
+      }
+    } catch (e) {
+      console.error('Error adding product to shipment:', e);
+    }
+  };
 
   const addAnotherProduct = () => {
     setChildProduct({
@@ -134,6 +206,7 @@ export default function AddChildProductScreen() {
       size: '',
       quality: '',
       additionalNotes: '',
+      blocks: [],
     });
     setShowQR(false);
   };
@@ -158,8 +231,8 @@ export default function AddChildProductScreen() {
     // Save the updated shipment to database
     updateShipmentInDatabase(updatedShipment)
       .then(() => {
-        // Set the final shipment QR URL instead of embedding data
-        const shipmentQrUrl = `https://qrfarm.app/shipment/${shipmentId}`;
+        // Set the final shipment QR URL with the new pattern
+        const shipmentQrUrl = `https://yourdomain.com/batch/${shipmentId}`;
         
         // Show success alert with options to view QR or go home
         Alert.alert(

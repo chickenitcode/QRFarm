@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipment Information | QR Farm</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .shipment-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .shipment-header {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        .shipment-info {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+        }
+        .info-label {
+            font-weight: bold;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo h1 {
+            color: #0a7ea4;
+            margin: 0;
+        }
+        
+        /* Products list styles */
+        .products-container {
+            margin-top: 30px;
+        }
+        .products-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .product-item {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .product-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .product-id {
+            font-weight: bold;
+            color: #0a7ea4;
+            margin-bottom: 10px;
+        }
+        .product-detail {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .view-product {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #0a7ea4;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        /* Summary styles */
+        .journey-summary {
+            margin-top: 30px;
+        }
+        .summary-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .summary-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .step-number {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            background-color: #0a7ea4;
+            color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* Tabs for navigation */
+        .tabs {
+            display: flex;
+            margin-top: 30px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            background-color: #f5f5f5;
+        }
+        .tab.active {
+            background-color: white;
+            border-color: #ddd;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>QR Farm</h1>
+            <p>Shipment & Batch Information</p>
+        </div>
+        
+        <div id="shipment-display" class="shipment-card">
+            <div class="shipment-header">
+                <h2 id="shipment-id">Loading shipment information...</h2>
+            </div>
+            <div id="shipment-content">
+                <!-- Shipment data will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Tabs for navigation -->
+        <div class="tabs">
+            <div class="tab active" data-tab="products">Products</div>
+            <div class="tab" data-tab="journey">Journey Summary</div>
+        </div>
+        
+        <!-- Products List Tab -->
+        <div id="products-tab" class="tab-content active">
+            <div class="products-container">
+                <h2>Products in this Shipment</h2>
+                <p id="products-count">Loading products...</p>
+                
+                <div id="products-list" class="products-list">
+                    <!-- Product items will be inserted here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Journey Summary Tab -->
+        <div id="journey-tab" class="tab-content">
+            <div class="journey-summary">
+                <h2>Shipment Journey Summary</h2>
+                <p>Overview of the journey this entire shipment has taken:</p>
+                
+                <div id="journey-summary" class="summary-card">
+                    <!-- Journey summary will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get shipment ID from URL
+            const pathParts = window.location.pathname.split('/');
+            const batchId = pathParts[pathParts.length - 1];
+            
+            if (!batchId || !batchId.startsWith('SHIP-')) {
+                showError("Invalid shipment ID");
+                return;
+            }
+            
+            // Set up tab navigation
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and contents
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    const tabName = tab.getAttribute('data-tab');
+                    document.getElementById(`${tabName}-tab`).classList.add('active');
+                });
+            });
+            
+            // Fetch shipment data
+            fetchShipmentData(batchId);
+        });
+        
+        function fetchShipmentData(batchId) {
+            // In a real app, this would be an API call
+            // For demo purposes, we'll check localStorage first
+            
+            try {
+                // Get shipment data
+                const shipmentData = getShipmentData(batchId);
+                if (shipmentData) {
+                    displayShipmentData(shipmentData);
+                } else {
+                    showError("Shipment data not found locally");
+                }
+                
+                // Get product list for this shipment
+                const productIds = getShipmentProducts(batchId);
+                displayProductsList(productIds);
+                
+                // Generate journey summary from products
+                generateJourneySummary(batchId, productIds);
+                
+            } catch (e) {
+                console.error('Error retrieving data:', e);
+                showError("Error loading shipment data");
+            }
+        }
+        
+        function getShipmentData(batchId) {
+            // In a real app, you would fetch this from your API
+            // For demo, check localStorage or use mock data
+            
+            try {
+                const storedData = localStorage.getItem(`shipment_${batchId}`);
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+            } catch (e) {
+                console.log('No shipment data in localStorage');
+            }
+            
+            // Return mock data if not found in localStorage
+            return {
+                id: batchId,
+                productType: "Premium Apples",
+                harvestDate: "2023-03-15",
+                location: "Fresno, California",
+                responsibleStaff: "John Smith",
+                quantity: 10
+            };
+        }
+        
+        function getShipmentProducts(batchId) {
+            // Get product IDs associated with this shipment
+            try {
+                const storedProductIds = localStorage.getItem(`shipment_products_${batchId}`);
+                if (storedProductIds) {
+                    return JSON.parse(storedProductIds);
+                }
+            } catch (e) {
+                console.log('No product list in localStorage');
+            }
+            
+            // Return mock product IDs if not found
+            return [
+                `PROD-${batchId}-001`,
+                `PROD-${batchId}-002`,
+                `PROD-${batchId}-003`
+            ];
+        }
+        
+        function displayShipmentData(shipment) {
+            document.getElementById('shipment-id').textContent = `Shipment: ${shipment.id}`;
+            
+            const content = document.getElementById('shipment-content');
+            content.innerHTML = `
+                <div class="shipment-info">
+                    <span class="info-label">Product Type:</span>
+                    <span>${shipment.productType}</span>
+                    
+                    <span class="info-label">Harvest Date:</span>
+                    <span>${formatDate(shipment.harvestDate)}</span>
+                    
+                    <span class="info-label">Origin:</span>
+                    <span>${shipment.location}</span>
+                    
+                    <span class="info-label">Responsible Staff:</span>
+                    <span>${shipment.responsibleStaff}</span>
+                    
+                    <span class="info-label">Quantity:</span>
+                    <span>${shipment.quantity} products</span>
+                </div>
+            `;
+        }
+        
+        function displayProductsList(productIds) {
+            const productsCount = document.getElementById('products-count');
+            productsCount.textContent = `${productIds.length} products in this shipment`;
+            
+            const productsList = document.getElementById('products-list');
+            productsList.innerHTML = '';
+            
+            productIds.forEach(productId => {
+                // Get product data if available
+                const productData = getProductData(productId);
+                
+                const productEl = document.createElement('div');
+                productEl.className = 'product-item';
+                
+                if (productData) {
+                    // Use the data from the first block (producer info)
+                    const initialBlock = productData.blocks && productData.blocks.length > 0 
+                        ? productData.blocks[0] 
+                        : null;
+                        
+                    const details = initialBlock?.data?.productDetails || {};
+                    
+                    productEl.innerHTML = `
+                        <div class="product-id">${productId}</div>
+                        <div class="product-detail"><strong>Weight:</strong> ${details.weight || 'N/A'} kg</div>
+                        <div class="product-detail"><strong>Size:</strong> ${details.size || 'N/A'}</div>
+                        ${details.quality ? `<div class="product-detail"><strong>Quality:</strong> ${details.quality}</div>` : ''}
+                        <a href="/product/${productId}" class="view-product">View Details</a>
+                    `;
+                } else {
+                    // If no data available, just show the ID and link
+                    productEl.innerHTML = `
+                        <div class="product-id">${productId}</div>
+                        <div class="product-detail">Product details not available locally</div>
+                        <a href="/product/${productId}" class="view-product">View Details</a>
+                    `;
+                }
+                
+                productsList.appendChild(productEl);
+            });
+        }
+        
+        function getProductData(productId) {
+            try {
+                const storedData = localStorage.getItem(`product_${productId}`);
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+            } catch (e) {
+                console.log(`No data for product ${productId} in localStorage`);
+            }
+            return null;
+        }
+        
+        function generateJourneySummary(batchId, productIds) {
+            const journeySummary = document.getElementById('journey-summary');
+            
+            // Collect all unique steps from all products
+            const allSteps = [];
+            
+            productIds.forEach(productId => {
+                const productData = getProductData(productId);
+                if (productData && productData.blocks) {
+                    productData.blocks.forEach(block => {
+                        // Check if this step type already exists
+                        const existingStep = allSteps.find(step => 
+                            step.actorType === block.actorType &&
+                            step.blockId === block.blockId
+                        );
+                        
+                        if (!existingStep) {
+                            allSteps.push({
+                                blockId: block.blockId,
+                                actorType: block.actorType,
+                                actor: block.actor,
+                                location: block.location,
+                                timestamp: block.timestamp
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // Sort steps by blockId
+            allSteps.sort((a, b) => a.blockId - b.blockId);
+            
+            // Display the steps
+            if (allSteps.length === 0) {
+                journeySummary.innerHTML = '<p>No journey data available for this shipment</p>';
+                return;
+            }
+            
+            let summaryHTML = '';
+            
+            allSteps.forEach((step, index) => {
+                summaryHTML += `
+                    <div class="summary-step">
+                        <div class="step-number">${index + 1}</div>
+                        <div class="step-content">
+                            <div class="step-title">${getStepTitle(step.actorType)}</div>
+                            <div><strong>Actor:</strong> ${step.actor}</div>
+                            <div><strong>Location:</strong> ${step.location}</div>
+                            <div><strong>Date:</strong> ${formatDate(step.timestamp)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            journeySummary.innerHTML = summaryHTML;
+        }
+        
+        function getStepTitle(actorType) {
+            switch(actorType) {
+                case 'producer': return 'Production';
+                case 'importer': return 'Import Processing';
+                case 'trader': return 'Distribution';
+                case 'retailer': return 'Retail';
+                default: return 'Processing';
+            }
+        }
+        
+        function formatDate(dateInput) {
+            if (!dateInput) return 'Unknown';
+            
+            let date;
+            if (typeof dateInput === 'number') {
+                date = new Date(dateInput);
+            } else {
+                date = new Date(dateInput);
+            }
+            
+            if (isNaN(date.getTime())) {
+                return String(dateInput);
+            }
+            
+            return date.toLocaleDateString();
+        }
+        
+        function showError(message) {
+            const shipmentDisplay = document.getElementById('shipment-display');
+            shipmentDisplay.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
