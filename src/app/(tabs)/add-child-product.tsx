@@ -34,10 +34,10 @@ interface ProductBlock {
 
 export default function AddChildProductScreen() {
   const params = useLocalSearchParams();
-  const shipmentId = params.shipmentId as string;
-  const shipmentDataString = params.shipmentData as string;
+  const batchId = params.batchId as string;
+  const batchDataString = params.batchData as string;
   
-  const [shipmentData, setShipmentData] = useState<any>(null);
+  const [batchData, setBatchData] = useState<any>(null);
   const [productCount, setProductCount] = useState(0);
   
   const [childProduct, setChildProduct] = useState<Omit<ChildProductData, 'id' | 'parentId'>>({
@@ -51,20 +51,20 @@ export default function AddChildProductScreen() {
   const [qrValue, setQrValue] = useState('');
   const [productId, setProductId] = useState('');
   const [showQR, setShowQR] = useState(false);
-  const [showShipmentQR, setShowShipmentQR] = useState(false);
-  const [shipmentQRValue, setShipmentQRValue] = useState('');
+  const [showBatchQR, setShowBatchQR] = useState(false);
+  const [batchQRValue, setBatchQRValue] = useState('');
   const [showProductQR, setShowProductQR] = useState(false);
   
   useEffect(() => {
-    if (shipmentDataString) {
+    if (batchDataString) {
       try {
-        const parsed = JSON.parse(shipmentDataString);
-        setShipmentData(parsed);
+        const parsed = JSON.parse(batchDataString);
+        setBatchData(parsed);
       } catch (error) {
-        console.error('Failed to parse shipment data:', error);
+        console.error('Failed to parse batch data:', error);
       }
     }
-  }, [shipmentDataString]);
+  }, [batchDataString]);
   
   const updateField = (field: keyof Omit<ChildProductData, 'id' | 'parentId'>, value: string | number) => {
     setChildProduct(prev => ({ ...prev, [field]: value }));
@@ -75,7 +75,7 @@ export default function AddChildProductScreen() {
     if (childProduct.weight && childProduct.size.trim()) {
       
       // Generate a unique ID for the child product
-      const uniqueId = `PROD-${shipmentId}-${(productCount + 1).toString().padStart(3, '0')}`;
+      const uniqueId = `PROD-${batchId}-${(productCount + 1).toString().padStart(3, '0')}`;
       setProductId(uniqueId);
       
       // Create initial block (block 0) - producer's information
@@ -85,7 +85,7 @@ export default function AddChildProductScreen() {
           size: childProduct.size,
           quality: childProduct.quality || 'Standard',
         },
-        shipment: shipmentId,
+        batch: batchId,
         notes: childProduct.additionalNotes || '',
       };
       
@@ -97,7 +97,7 @@ export default function AddChildProductScreen() {
         timestamp: Date.now(),
         actor: 'Producer', // Default for the initial block
         actorType: 'producer' as 'producer', // Cast to specific union type
-        location: shipmentData?.location || 'Unknown',
+        location: batchData?.location || 'Unknown',
         data: initialBlockData,
         prevHash: '0', // Genesis block has prevHash of 0
         hash: initialBlockHash
@@ -107,15 +107,15 @@ export default function AddChildProductScreen() {
       const fullChildData = {
         ...childProduct,
         id: uniqueId,
-        parentId: shipmentId,
+        parentId: batchId,
         blocks: [initialBlock]
       };
       
       // Save product data to your backend
       saveChildProductToDatabase(fullChildData);
       
-      // Also add this product to the parent shipment's product list
-      addProductToShipment(shipmentId, uniqueId);
+      // Also add this product to the parent batch's product list
+      addProductToBatch(batchId, uniqueId);
       
       // For local testing, save to localStorage if available
       if (typeof localStorage !== 'undefined') {
@@ -131,7 +131,7 @@ export default function AddChildProductScreen() {
       
       setQrValue(qrUrl);
       setShowProductQR(true);
-      setShowShipmentQR(false);
+      setShowBatchQR(false);
       
       // Increase the product count
       setProductCount(prev => prev + 1);
@@ -177,26 +177,26 @@ export default function AddChildProductScreen() {
     // .catch(error => console.error('Error saving product:', error));
   };
   
-  // Add this function to keep track of products in a shipment
-  const addProductToShipment = (shipmentId: string, productId: string) => {
+  // Add this function to keep track of products in a batch
+  const addProductToBatch = (batchId: string, productId: string) => {
     try {
-      // In a real app, you would call an API to update the shipment
-      console.log(`Adding product ${productId} to shipment ${shipmentId}`);
+      // In a real app, you would call an API to update the batch
+      console.log(`Adding product ${productId} to batch ${batchId}`);
       
-      // For demo purposes, use localStorage to track shipment contents
+      // For demo purposes, use localStorage to track batch contents
       if (typeof localStorage !== 'undefined') {
-        // Get current products in shipment
-        const shipmentProductsKey = `shipment_products_${shipmentId}`;
-        const currentProducts = JSON.parse(localStorage.getItem(shipmentProductsKey) || '[]');
+        // Get current products in batch
+        const batchProductsKey = `batch_products_${batchId}`;
+        const currentProducts = JSON.parse(localStorage.getItem(batchProductsKey) || '[]');
         
         // Add the new product
         currentProducts.push(productId);
         
         // Save back to localStorage
-        localStorage.setItem(shipmentProductsKey, JSON.stringify(currentProducts));
+        localStorage.setItem(batchProductsKey, JSON.stringify(currentProducts));
       }
     } catch (e) {
-      console.error('Error adding product to shipment:', e);
+      console.error('Error adding product to batch:', e);
     }
   };
 
@@ -211,41 +211,41 @@ export default function AddChildProductScreen() {
     setShowQR(false);
   };
 
-  const completeShipment = () => {
+  const completeBatch = () => {
     if (productCount === 0) {
       Alert.alert(
         'No Products Added',
-        'Please add at least one product before completing the shipment.',
+        'Please add at least one product before completing the batch.',
         [{ text: 'OK' }]
       );
       return;
     }
   
-    // Create updated shipment data with new quantity
-    const updatedShipment = {
-      ...JSON.parse(shipmentDataString),
-      id: shipmentId,
+    // Create updated batch data with new quantity
+    const updatedBatch = {
+      ...JSON.parse(batchDataString),
+      id: batchId,
       quantity: productCount
     };
     
-    // Save the updated shipment to database
-    updateShipmentInDatabase(updatedShipment)
+    // Save the updated batch to database
+    updateBatchInDatabase(updatedBatch)
       .then(() => {
-        // Set the final shipment QR URL with the new pattern
-        const shipmentQrUrl = `https://yourdomain.com/batch/${shipmentId}`;
+        // Set the final batch QR URL with the new pattern
+        const batchQrUrl = `https://yourdomain.com/batch/${batchId}`;
         
         // Show success alert with options to view QR or go home
         Alert.alert(
-          'Shipment Completed',
-          `Shipment ${shipmentId} has been completed with ${productCount} products.`,
+          'Batch Completed',
+          `Batch ${batchId} has been completed with ${productCount} products.`,
           [
             { 
-              text: 'View Shipment QR', 
+              text: 'View Batch QR', 
               onPress: () => {
-                // Show the final shipment QR code
+                // Show the final batch QR code
                 setShowQR(false);
-                setShipmentQRValue(shipmentQrUrl);
-                setShowShipmentQR(true);
+                setBatchQRValue(batchQrUrl);
+                setShowBatchQR(true);
               } 
             },
             { 
@@ -256,26 +256,26 @@ export default function AddChildProductScreen() {
         );
       })
       .catch(error => {
-        console.error('Failed to update shipment:', error);
+        console.error('Failed to update batch:', error);
         Alert.alert(
           'Error',
-          'Failed to update shipment quantity. Please try again.',
+          'Failed to update batch quantity. Please try again.',
           [{ text: 'OK' }]
         );
       });
   };
 
-  // Function to update the shipment in database
-  const updateShipmentInDatabase = async (shipment: any) => {
-    // In a real app, this would update the shipment in your database
-    console.log('Updating shipment with new quantity:', shipment);
+  // Function to update the batch in database
+  const updateBatchInDatabase = async (batch: any) => {
+    // In a real app, this would update the batch in your database
+    console.log('Updating batch with new quantity:', batch);
     
     // For demo purposes, we'll simulate an API call with a promise
     return new Promise<void>((resolve) => {
       // Simulate network delay
       setTimeout(() => {
-        // Log the updated shipment
-        console.log('Shipment updated successfully:', shipment);
+        // Log the updated batch
+        console.log('Batch updated successfully:', batch);
         
         // Provide haptic feedback on success
         if (Platform.OS === 'ios') {
@@ -298,13 +298,13 @@ export default function AddChildProductScreen() {
           keyboardShouldPersistTaps="handled">
           
           <ThemedView style={styles.header}>
-            <ThemedText type="title">Add Product to Shipment</ThemedText>
+            <ThemedText type="title">Add Product to Batch</ThemedText>
             <ThemedText style={styles.description}>
-              Shipment ID: {shipmentId}
+              Batch ID: {batchId}
             </ThemedText>
-            {shipmentData && (
-              <ThemedText style={styles.shipmentInfo}>
-                {shipmentData.productType} - {productCount} products added
+            {batchData && (
+              <ThemedText style={styles.batchInfo}>
+                {batchData.productType} - {productCount} products added
               </ThemedText>
             )}
           </ThemedView>
@@ -385,7 +385,7 @@ export default function AddChildProductScreen() {
                 Weight: {childProduct.weight}kg, Size: {childProduct.size}cm
               </ThemedText>
               <ThemedText style={styles.infoText}>
-                Part of Shipment: {shipmentId}
+                Part of Batch: {batchId}
               </ThemedText>
               
               <View style={styles.actionButtonsContainer}>
@@ -401,11 +401,11 @@ export default function AddChildProductScreen() {
                 
                 <TouchableOpacity 
                   style={[styles.actionButton, styles.completeButton]} 
-                  onPress={completeShipment}
+                  onPress={completeBatch}
                   activeOpacity={0.7}
                 >
                   <ThemedText style={styles.completeButtonText}>
-                    Complete Shipment
+                    Complete Batch
                   </ThemedText>
                 </TouchableOpacity>
               </View>
@@ -443,27 +443,27 @@ export default function AddChildProductScreen() {
                 
                 <TouchableOpacity 
                   style={[styles.actionButton, styles.completeButton]} 
-                  onPress={completeShipment}
+                  onPress={completeBatch}
                   activeOpacity={0.7}
                 >
                   <ThemedText style={styles.completeButtonText}>
-                    Complete Shipment
+                    Complete Batch
                   </ThemedText>
                 </TouchableOpacity>
               </View>
             </ThemedView>
           )}
 
-          {showShipmentQR && (
+          {showBatchQR && (
             <ThemedView style={styles.qrContainer}>
               <QRCode
-                value={shipmentQRValue}
+                value={batchQRValue}
                 size={200}
                 backgroundColor="white"
                 color="black"
               />
               <ThemedText style={styles.resultText}>
-                Shipment QR Generated - ID: {shipmentId}
+                Batch QR Generated - ID: {batchId}
               </ThemedText>
               <ThemedText style={styles.infoText}>
                 Quantity: {productCount}
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     opacity: 0.8,
   },
-  shipmentInfo: {
+  batchInfo: {
     marginTop: 4,
     opacity: 0.8,
     fontWeight: '500',
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
-  shipmentTitle: {
+  batchTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
@@ -601,7 +601,3 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
-
-function setShowProductQR(arg0: boolean) {
-  throw new Error('Function not implemented.');
-}

@@ -30,40 +30,64 @@ export default function ScanForUpdateScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     
-    // Check if the QR contains a URL with a product ID
     try {
-      // Extract the product ID from the URL
-      let productId;
-      
+      // First, check if this is a product QR code
       if (data.includes('/product/')) {
         // Extract ID from URL like https://yourdomain.com/product/PROD-123
         const urlParts = data.split('/');
-        productId = urlParts[urlParts.length - 1];
-      } else {
-        // If it's not a URL, check if it's directly a product ID
-        if (data.startsWith('PROD-')) {
-          productId = data;
-        } else {
-          throw new Error('Invalid QR code format');
+        const productId = urlParts[urlParts.length - 1];
+        
+        if (productId) {
+          router.navigate({
+            pathname: '/(tabs)/update-product',
+            params: { productId }
+          });
+          return;
+        }
+      } 
+      // Check if it's a batch QR code
+      else if (data.includes('/batch/')) {
+        // Extract ID from URL like https://yourdomain.com/batch/SHIP-123
+        const urlParts = data.split('/');
+        const batchId = urlParts[urlParts.length - 1];
+        
+        if (batchId) {
+          router.navigate({
+            pathname: '/(tabs)/update-batch',
+            params: { batchId }
+          });
+          return;
         }
       }
-      
-      // Navigate to update screen with the product ID
-      if (productId) {
+      // Check direct ID formats (without URL)
+      else if (data.startsWith('PROD-')) {
         router.navigate({
           pathname: '/(tabs)/update-product',
-          params: { productId }
+          params: { productId: data }
         });
-      } else {
-        Alert.alert('Invalid QR Code', 'Could not find a valid product ID in the QR code.');
-        setScanned(false);
+        return;
       }
+      else if (data.startsWith('SHIP-')) {
+        router.navigate({
+          pathname: '/(tabs)/update-batch',
+          params: { batchId: data }
+        });
+        return;
+      }
+      
+      // If we get here, the QR code wasn't recognized
+      Alert.alert(
+        'Invalid QR Code', 
+        'Could not identify a valid product or batch QR code.',
+        [{ text: 'Try Again', onPress: () => setScanned(false) }]
+      );
+      
     } catch (error) {
       console.error('Error processing QR code:', error);
       Alert.alert(
         'Error Reading QR Code',
-        'The scanned QR code does not contain valid product information.',
-        [{ text: 'OK', onPress: () => setScanned(false) }]
+        'The scanned QR code could not be processed.',
+        [{ text: 'Try Again', onPress: () => setScanned(false) }]
       );
     }
   };
@@ -115,7 +139,7 @@ export default function ScanForUpdateScreen() {
         <View style={styles.instructionsContainer}>
           <ThemedView style={styles.instructions}>
             <ThemedText style={styles.instructionsText}>
-              Scan a product QR code to update its information
+              Scan a product or batch QR code to update
             </ThemedText>
           </ThemedView>
         </View>

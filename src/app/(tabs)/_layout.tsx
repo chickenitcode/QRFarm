@@ -36,7 +36,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create-qr"
         options={{
-          title: 'Shipment',
+          title: 'Batch',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="shippingbox.fill" color={color} />,
         }}
       />
@@ -46,13 +46,6 @@ export default function TabLayout() {
           title: 'Products',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="cart.fill" color={color} />,
           href: null, // This makes it not directly accessible from tabs
-        }}
-      />
-      <Tabs.Screen
-        name="scan-qr"
-        options={{
-          title: 'Scan QR',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="camera.fill" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -66,6 +59,14 @@ export default function TabLayout() {
         name="update-product"
         options={{
           title: 'Update Product',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="qrcode" color={color} />,
+          href: null, // This makes it not directly accessible from tabs
+        }}
+      />
+      <Tabs.Screen
+        name="update-batch"
+        options={{
+          title: 'Update Batch',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="qrcode" color={color} />,
           href: null, // This makes it not directly accessible from tabs
         }}

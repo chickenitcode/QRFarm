@@ -81,7 +81,7 @@ export default function UpdateProductScreen() {
     // Create a mock product for testing on mobile
     return {
       id,
-      parentId: 'SHIP-MOCK-001',
+      parentId: 'BATCH-MOCK-001',
       weight: 2.5,
       size: '10x15',
       quality: 'A',
@@ -172,7 +172,8 @@ export default function UpdateProductScreen() {
       
       // In a real app, you would call your API to save the update:
       // saveProductUpdate(productId, newBlock)
-      
+      console.log('Saving product to database:', updatedProduct);
+
       // Provide haptic feedback on success
       if (Platform.OS === 'ios') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

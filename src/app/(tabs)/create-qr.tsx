@@ -1,25 +1,36 @@
-import React, { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React, { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-interface ShipmentData {
+interface BatchData {
   id: string;
   productType: string;
   harvestDate: Date;
   location: string;
   responsibleStaff: string;
   quantity: number;
+  blocks?: BatchBlock[];
 }
 
-export default function CreateShipmentScreen() {
-  const [shipmentData, setShipmentData] = useState<Omit<ShipmentData, 'id' | 'quantity'>>({
+interface BatchBlock {
+  blockId: number;
+  timestamp: number;
+  actor: string;
+  location: string;
+  data: any;
+  prevHash: string;
+  hash: string;
+}
+
+export default function CreateBatchScreen() {
+  const [batchData, setBatchData] = useState<Omit<BatchData, 'id' | 'quantity'>>({
     productType: '',
     harvestDate: new Date(),
     location: '',
@@ -27,48 +38,89 @@ export default function CreateShipmentScreen() {
   });
   
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [shipmentId, setShipmentId] = useState('');
+  const [batchId, setBatchId] = useState('');
   
-  const updateField = (field: keyof Omit<ShipmentData, 'id' | 'quantity'>, value: any) => {
-    setShipmentData(prev => ({ ...prev, [field]: value }));
+  const updateField = (field: keyof Omit<BatchData, 'id' | 'quantity'>, value: any) => {
+    setBatchData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const calculateHash = (blockId: number, prevHash: string | number, data: string) => {
+    const dataToHash = `${blockId}:${prevHash}:${data}:${Date.now()}`;
+    // This is a simplified hash for demo. Use a proper hash function in production
+    return Array.from(dataToHash)
+      .reduce((hash, char) => hash ^ char.charCodeAt(0) + ((hash << 5) - hash), 0)
+      .toString(16);
   };
   
-  const createShipment = () => {
+  const createBatch = () => {
     // Validate all required fields
-    if (shipmentData.productType.trim() && 
-        shipmentData.location.trim() && 
-        shipmentData.responsibleStaff.trim()) {
+    if (batchData.productType.trim() && 
+        batchData.location.trim() && 
+        batchData.responsibleStaff.trim()) {
       
-      // Generate a unique ID for the shipment
-      const uniqueId = 'SHIP-' + Date.now().toString(36).toUpperCase();
+      // Generate a unique ID for the batch
+      const uniqueId = 'BATCH-' + Date.now().toString(36).toUpperCase();
       
-      // Create the full shipment data with ID and quantity
-      const fullShipmentData: ShipmentData = {
-        ...shipmentData,
+      // Create initial block data
+      const initialBlockData = {
+        productType: batchData.productType,
+        harvestDate: batchData.harvestDate,
+        location: batchData.location,
+        responsibleStaff: batchData.responsibleStaff,
+        action: 'batch_created'
+      };
+      
+      // Calculate hash for the initial block
+      const initialBlockHash = calculateHash(0, '0', JSON.stringify(initialBlockData));
+      
+      // Create genesis block for this batch
+      const genesisBlock = {
+        blockId: 0,
+        timestamp: Date.now(),
+        actor: batchData.responsibleStaff,
+        location: batchData.location,
+        data: initialBlockData,
+        prevHash: '0', // Genesis block has prevHash of 0
+        hash: initialBlockHash
+      };
+      
+      // Create the full batch data with ID, quantity, and blockchain
+      const fullBatchData = {
+        ...batchData,
         id: uniqueId,
-        quantity: 0 // Initialize quantity to 0
+        quantity: 0, // Initialize quantity to 0
+        blocks: [genesisBlock]
       };
       
       // Save to mock database (in a real app, this would be a DB call)
-      saveShipmentToDatabase(fullShipmentData)
+      saveBatchToDatabase(fullBatchData)
         .then(() => {
+          // Save the batch blocks to localStorage too
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(`batch_${uniqueId}`, JSON.stringify(fullBatchData));
+            localStorage.setItem(`batch_blocks_${uniqueId}`, JSON.stringify([genesisBlock]));
+          }
+          
           // Provide haptic feedback on success
           if (Platform.OS === 'ios') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
           
-          // Navigate to the product addition screen with the shipment data
+          // Navigate to the product addition screen with the batch data
           router.push({
             pathname: '/(tabs)/add-child-product',
             params: { 
-              shipmentId: uniqueId, 
-              shipmentData: JSON.stringify(shipmentData) 
+              batchId: uniqueId, 
+              batchData: JSON.stringify({
+                ...batchData,
+                id: uniqueId
+              }) 
             }
           });
         })
         .catch(error => {
-          console.error('Failed to create shipment:', error);
-          Alert.alert('Error', 'Failed to create shipment. Please try again.');
+          console.error('Failed to create batch:', error);
+          Alert.alert('Error', 'Failed to create batch. Please try again.');
         });
     } else {
       Alert.alert('Missing Information', 'Please fill in all required fields.');
@@ -80,14 +132,14 @@ export default function CreateShipmentScreen() {
     }
   };
 
-  const saveShipmentToDatabase = async (shipment: ShipmentData) => {
+  const saveBatchToDatabase = async (batch: BatchData) => {
     // In a real app, this would save to a database
-    console.log('Saving shipment to database:', shipment);
+    console.log('Saving batch to database:', batch);
     
     // For demo purposes, we'll simulate an API call with a promise
     return new Promise<void>((resolve) => {
       setTimeout(() => {
-        console.log('Shipment created successfully:', shipment);
+        console.log('Batch created successfully:', batch);
         resolve();
       }, 300);
     });
@@ -105,7 +157,7 @@ export default function CreateShipmentScreen() {
   };
 
   const resetForm = () => {
-    setShipmentData({
+    setBatchData({
       productType: '',
       harvestDate: new Date(),
       location: '',
@@ -124,9 +176,9 @@ export default function CreateShipmentScreen() {
           keyboardShouldPersistTaps="handled">
           
           <ThemedView style={styles.header}>
-            <ThemedText type="title">Create Shipment</ThemedText>
+            <ThemedText type="title">Create Batch</ThemedText>
             <ThemedText style={styles.description}>
-              Enter shipment information to begin tracking products
+              Enter batch information to begin tracking products
             </ThemedText>
           </ThemedView>
           
@@ -135,7 +187,7 @@ export default function CreateShipmentScreen() {
               <ThemedText style={styles.label}>Agricultural Product Type *</ThemedText>
               <TextInput
                 style={styles.input}
-                value={shipmentData.productType}
+                value={batchData.productType}
                 onChangeText={(text) => updateField('productType', text)}
                 placeholder="Enter product type (e.g., Apples, Rice)"
                 placeholderTextColor="#999"
@@ -148,12 +200,12 @@ export default function CreateShipmentScreen() {
                 style={styles.dateInput}
                 onPress={() => setShowDatePicker(true)}
               >
-                <ThemedText>{formatDate(shipmentData.harvestDate)}</ThemedText>
+                <ThemedText>{formatDate(batchData.harvestDate)}</ThemedText>
               </TouchableOpacity>
               
               {showDatePicker && (
                 <DateTimePicker
-                  value={shipmentData.harvestDate}
+                  value={batchData.harvestDate}
                   mode="date"
                   display="default"
                   onChange={onDateChange}
@@ -165,7 +217,7 @@ export default function CreateShipmentScreen() {
               <ThemedText style={styles.label}>Location *</ThemedText>
               <TextInput
                 style={styles.input}
-                value={shipmentData.location}
+                value={batchData.location}
                 onChangeText={(text) => updateField('location', text)}
                 placeholder="Enter harvest location"
                 placeholderTextColor="#999"
@@ -176,7 +228,7 @@ export default function CreateShipmentScreen() {
               <ThemedText style={styles.label}>Responsible Staff *</ThemedText>
               <TextInput
                 style={styles.input}
-                value={shipmentData.responsibleStaff}
+                value={batchData.responsibleStaff}
                 onChangeText={(text) => updateField('responsibleStaff', text)}
                 placeholder="Enter responsible staff name"
                 placeholderTextColor="#999"
@@ -187,10 +239,10 @@ export default function CreateShipmentScreen() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={styles.button} 
-              onPress={createShipment}
+              onPress={createBatch}
               activeOpacity={0.7}
             >
-              <ThemedText style={styles.buttonText}>Create Shipment</ThemedText>
+              <ThemedText style={styles.buttonText}>Create Batch</ThemedText>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -203,7 +255,7 @@ export default function CreateShipmentScreen() {
           </View>
           
           <ThemedText style={styles.noteText}>
-            * The QR code for this shipment will be generated after you add products
+            * The QR code for this batch will be generated after you add products
           </ThemedText>
         </ScrollView>
       </KeyboardAvoidingView>
