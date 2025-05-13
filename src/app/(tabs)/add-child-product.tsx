@@ -9,6 +9,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+// Import the API services
+import { addBatchBlock, saveChildProduct } from '@/services/api';
+
 interface ChildProductData {
   id: string;
   parentId: string;
@@ -78,7 +81,7 @@ export default function AddChildProductScreen() {
       const uniqueId = `PROD-${batchId}-${(productCount + 1).toString().padStart(3, '0')}`;
       setProductId(uniqueId);
       
-      // Create initial block (block 0) - producer's information
+      // Create initial block data
       const initialBlockData = {
         productDetails: {
           weight: childProduct.weight,
@@ -92,14 +95,14 @@ export default function AddChildProductScreen() {
       // Calculate hash for the initial block
       const initialBlockHash = calculateHash(0, 0, JSON.stringify(initialBlockData));
       
-      const initialBlock: ProductBlock = {
+      const initialBlock = {
         blockId: 0,
         timestamp: Date.now(),
-        actor: 'Producer', // Default for the initial block
-        actorType: 'producer' as 'producer', // Cast to specific union type
+        actor: 'Producer', 
+        actorType: 'producer',
         location: batchData?.location || 'Unknown',
         data: initialBlockData,
-        prevHash: '0', // Genesis block has prevHash of 0
+        prevHash: '0',
         hash: initialBlockHash
       };
       
@@ -107,39 +110,32 @@ export default function AddChildProductScreen() {
       const fullChildData = {
         ...childProduct,
         id: uniqueId,
-        parentId: batchId,
+        batchId: batchId,
         blocks: [initialBlock]
       };
       
-      // Save product data to your backend
-      saveChildProductToDatabase(fullChildData);
-      
-      // Also add this product to the parent batch's product list
-      addProductToBatch(batchId, uniqueId);
-      
-      // For local testing, save to localStorage if available
-      if (typeof localStorage !== 'undefined') {
-        try {
-          localStorage.setItem(`product_${uniqueId}`, JSON.stringify(fullChildData));
-        } catch (e) {
-          console.log('Could not save to localStorage:', e);
-        }
-      }
-      
-      // Create QR URL using the new pattern for products
-      const qrUrl = `https://yourdomain.com/product/${uniqueId}`;
-      
-      setQrValue(qrUrl);
-      setShowProductQR(true);
-      setShowBatchQR(false);
-      
-      // Increase the product count
-      setProductCount(prev => prev + 1);
-      
-      // Provide haptic feedback on success
-      if (Platform.OS === 'ios') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      // Save product data using the API
+      saveChildProduct(fullChildData)
+        .then(() => {
+          // Create QR URL using the new pattern for products
+          const qrUrl = `https://yourdomain.com/product/${uniqueId}`;
+          
+          setQrValue(qrUrl);
+          setShowProductQR(true);
+          setShowBatchQR(false);
+          
+          // Increase the product count
+          setProductCount(prev => prev + 1);
+          
+          // Provide haptic feedback on success
+          if (Platform.OS === 'ios') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+        })
+        .catch(error => {
+          console.error('Error saving product:', error);
+          Alert.alert('Error', 'Failed to save product. Please try again.');
+        });
     } else {
       Alert.alert('Missing Information', 'Please enter at least weight and size for the product.');
       
@@ -221,20 +217,28 @@ export default function AddChildProductScreen() {
       return;
     }
   
-    // Create updated batch data with new quantity
-    const updatedBatch = {
-      ...JSON.parse(batchDataString),
-      id: batchId,
-      quantity: productCount
+    // Create a final block for the batch completion
+    const finalBlock = {
+      blockId: 1, // In production, you should get the max blockId and increment
+      timestamp: Date.now(),
+      actor: "System",
+      location: batchData?.location || "Unknown",
+      data: {
+        action: "batch_completed",
+        quantity: productCount,
+        status: "Completed"
+      },
+      prevHash: "0", // This should be the hash of the previous block
+      hash: calculateHash(1, "0", JSON.stringify({ quantity: productCount }))
     };
     
-    // Save the updated batch to database
-    updateBatchInDatabase(updatedBatch)
+    // Add the final block to the batch chain using the API
+    addBatchBlock(batchId, finalBlock)
       .then(() => {
-        // Set the final batch QR URL with the new pattern
+        // Set the final batch QR URL
         const batchQrUrl = `https://yourdomain.com/batch/${batchId}`;
         
-        // Show success alert with options to view QR or go home
+        // Show success alert
         Alert.alert(
           'Batch Completed',
           `Batch ${batchId} has been completed with ${productCount} products.`,
@@ -242,7 +246,6 @@ export default function AddChildProductScreen() {
             { 
               text: 'View Batch QR', 
               onPress: () => {
-                // Show the final batch QR code
                 setShowQR(false);
                 setBatchQRValue(batchQrUrl);
                 setShowBatchQR(true);
@@ -257,11 +260,7 @@ export default function AddChildProductScreen() {
       })
       .catch(error => {
         console.error('Failed to update batch:', error);
-        Alert.alert(
-          'Error',
-          'Failed to update batch quantity. Please try again.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Error', 'Failed to update batch. Please try again.');
       });
   };
 

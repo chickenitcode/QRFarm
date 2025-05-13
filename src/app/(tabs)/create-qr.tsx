@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { saveBatch } from '@/services/api';
 
 interface BatchData {
   id: string;
@@ -92,15 +93,9 @@ export default function CreateBatchScreen() {
         blocks: [genesisBlock]
       };
       
-      // Save to mock database (in a real app, this would be a DB call)
-      saveBatchToDatabase(fullBatchData)
+      // Save to MongoDB through the API
+      saveBatch(fullBatchData)
         .then(() => {
-          // Save the batch blocks to localStorage too
-          if (typeof localStorage !== 'undefined') {
-            localStorage.setItem(`batch_${uniqueId}`, JSON.stringify(fullBatchData));
-            localStorage.setItem(`batch_blocks_${uniqueId}`, JSON.stringify([genesisBlock]));
-          }
-          
           // Provide haptic feedback on success
           if (Platform.OS === 'ios') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -130,19 +125,6 @@ export default function CreateBatchScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     }
-  };
-
-  const saveBatchToDatabase = async (batch: BatchData) => {
-    // In a real app, this would save to a database
-    console.log('Saving batch to database:', batch);
-    
-    // For demo purposes, we'll simulate an API call with a promise
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        console.log('Batch created successfully:', batch);
-        resolve();
-      }, 300);
-    });
   };
 
   const formatDate = (date: Date) => {
