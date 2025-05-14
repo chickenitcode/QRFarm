@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { addProductBlock, getProduct } from '@/services/api';
 
 interface ProductBlock {
   blockId: number;
@@ -54,24 +55,18 @@ export default function UpdateProductScreen() {
     setError(null);
     
     try {
-      // In a real app, this would be an API call to your backend
-      // For demo, we'll try to get it from localStorage
-      if (typeof localStorage !== 'undefined') {
-        const storedData = localStorage.getItem(`product_${productId}`);
-        if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          setProduct(parsedData);
-        } else {
-          setError('Product not found in local storage');
-        }
-      } else {
-        // Mock product data for mobile testing (where localStorage isn't available)
+      // Get product data from the API
+      const productData = await getProduct(productId);
+      setProduct(productData);
+    } catch (e) {
+      console.error('Error fetching product:', e);
+      setError('Failed to load product data. Please check your connection.');
+      
+      // Fallback to mock data for demo purposes if API fails
+      if (Platform.OS !== 'web') {
         const mockProduct = createMockProduct(productId);
         setProduct(mockProduct);
       }
-    } catch (e) {
-      console.error('Error fetching product:', e);
-      setError('Failed to load product data');
     } finally {
       setLoading(false);
     }
@@ -152,44 +147,35 @@ export default function UpdateProductScreen() {
         blockId: newBlockId,
         timestamp: Date.now(),
         actor: formData.actor,
-        actorType: formData.actorType as any, // Cast to the expected type
+        actorType: formData.actorType as any,
         location: formData.location,
         data: newBlockData,
         prevHash: prevHash,
         hash: newHash
       };
       
-      // Create updated product with the new block added
-      const updatedProduct = {
-        ...product,
-        blocks: [...product.blocks, newBlock]
-      };
-      
-      // Save the updated product
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(`product_${productId}`, JSON.stringify(updatedProduct));
-      }
-      
-      // In a real app, you would call your API to save the update:
-      // saveProductUpdate(productId, newBlock)
-      console.log('Saving product to database:', updatedProduct);
-
-      // Provide haptic feedback on success
-      if (Platform.OS === 'ios') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      
-      // Show success message and navigate back
-      Alert.alert(
-        'Product Updated',
-        'The product journey has been successfully updated.',
-        [
-          { 
-            text: 'OK', 
-            onPress: () => router.navigate('/(tabs)')
+      // Save the new block to the database via API
+      addProductBlock(productId, newBlock)
+        .then(() => {
+          // Provide haptic feedback on success
+          if (Platform.OS === 'ios') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
-        ]
-      );
+          
+          // Show success message and navigate back
+          Alert.alert(
+            'Product Updated',
+            'The product journey has been successfully updated.',
+            [{ 
+              text: 'OK', 
+              onPress: () => router.navigate('/(tabs)')
+            }]
+          );
+        })
+        .catch(error => {
+          console.error('API error updating product:', error);
+          Alert.alert('Error', 'Failed to update product information. Please try again.');
+        });
     } catch (e) {
       console.error('Error updating product:', e);
       Alert.alert('Error', 'Failed to update product information. Please try again.');

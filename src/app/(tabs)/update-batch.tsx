@@ -8,6 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+// Import the API functions
+import { addBatchBlock, getBatch, getBatchProducts } from '@/services/api';
+
 interface BatchData {
   id: string;
   productType: string;
@@ -31,14 +34,6 @@ interface BatchBlock {
   hash: string;
 }
 
-interface BatchStage {
-  stageId: number;
-  timestamp: number;
-  stageName: string;
-  actor: string;
-  location: string;
-  notes: string;
-}
 
 export default function UpdateBatchScreen() {
   const params = useLocalSearchParams();
@@ -65,40 +60,30 @@ export default function UpdateBatchScreen() {
     fetchBatchData();
   }, [batchId]);
 
+  // Replace the fetchBatchData function
   const fetchBatchData = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      // In a real app, this would be an API call to your backend
-      // For demo, we'll try to get it from localStorage
-      if (typeof localStorage !== 'undefined') {
-        // Get batch data
-        const storedData = localStorage.getItem(`batch_${batchId}`);
-        if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          setBatch(parsedData);
-        } else {
-          // If no direct batch data, try to fallback to mock data
-          const mockBatch = createMockBatch(batchId);
-          setBatch(mockBatch);
-        }
-        
-        // Get products associated with this batch
-        const batchProductsKey = `batch_products_${batchId}`;
-        const storedProducts = localStorage.getItem(batchProductsKey);
-        if (storedProducts) {
-          setProducts(JSON.parse(storedProducts));
-        }
-      } else {
-        // For mobile testing where localStorage isn't available
+      // Get batch data from the API
+      const batchData = await getBatch(batchId);
+      setBatch(batchData);
+      
+      // Get products associated with this batch
+      const productsData = await getBatchProducts(batchId);
+      const productIds = productsData.map((product: { id?: string; _id?: string }) => product.id || product._id);
+      setProducts(productIds);
+    } catch (e) {
+      console.error('Error fetching batch:', e);
+      setError('Failed to load batch data. Please check your connection.');
+      
+      // Fallback to mock data for demo purposes if API fails
+      if (Platform.OS !== 'web') {
         const mockBatch = createMockBatch(batchId);
         setBatch(mockBatch);
         setProducts([`PROD-${batchId}-001`, `PROD-${batchId}-002`]);
       }
-    } catch (e) {
-      console.error('Error fetching batch:', e);
-      setError('Failed to load batch data');
     } finally {
       setLoading(false);
     }
@@ -132,6 +117,7 @@ export default function UpdateBatchScreen() {
       .toString(16);
   };
 
+  // Replace the handleUpdateBatch function
   const handleUpdateBatch = () => {
     // Validate the form fields
     if (!formData.stageName || !formData.actor || !formData.location) {
@@ -202,69 +188,31 @@ export default function UpdateBatchScreen() {
         hash: newHash
       };
       
-      // Add the new block to the chain
-      batchBlocks.push(newBlock);
-      
-      // Update batch data
-      const updatedBatch = {
-        ...batch,
-        status: formData.status || batch.status,
-        notes: formData.notes || batch.notes,
-        lastUpdated: Date.now(),
-        blocks: batchBlocks
-      };
-      
-      // Create a new stage entry for compatibility with existing code
-      const newStage: BatchStage = {
-        stageId: Date.now(),
-        timestamp: Date.now(),
-        stageName: formData.stageName,
-        actor: formData.actor,
-        location: formData.location,
-        notes: formData.notes || ''
-      };
-      
-      // Save the updated batch stages (keeping for compatibility)
-      const batchStagesKey = `batch_stages_${batchId}`;
-      let stages: BatchStage[] = [];
-      
-      if (typeof localStorage !== 'undefined') {
-        try {
-          const storedStages = localStorage.getItem(batchStagesKey);
-          if (storedStages) {
-            stages = JSON.parse(storedStages);
+      // Save the new block to the database via API
+      addBatchBlock(batchId, newBlock)
+        .then(() => {
+          console.log('Batch updated via API');
+          console.log('New block added:', newBlock);
+          
+          // Provide haptic feedback on success
+          if (Platform.OS === 'ios') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
-        } catch (e) {
-          console.error('Error reading stages:', e);
-        }
-        
-        // Add the new stage
-        stages.push(newStage);
-        
-        // Save batch data, stages, and blocks
-        localStorage.setItem(`batch_${batchId}`, JSON.stringify(updatedBatch));
-        localStorage.setItem(batchStagesKey, JSON.stringify(stages));
-        localStorage.setItem(`batch_blocks_${batchId}`, JSON.stringify(batchBlocks));
-      }
-      
-      console.log('Batch updated:', updatedBatch);
-      console.log('New block added:', newBlock);
-      console.log('Current hash chain length:', batchBlocks.length);
-      
-      // Provide haptic feedback on success
-      if (Platform.OS === 'ios') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      
-      // Show success message and navigate back
-      Alert.alert(
-        'Batch Updated',
-        'The batch journey has been successfully updated with secure blockchain record.',
-        [{ 
-          text: 'OK', 
-          onPress: () => router.navigate('/(tabs)')
-        }]
-      );
+          
+          // Show success message and navigate back
+          Alert.alert(
+            'Batch Updated',
+            'The batch journey has been successfully updated with secure blockchain record.',
+            [{ 
+              text: 'OK', 
+              onPress: () => router.navigate('/(tabs)')
+            }]
+          );
+        })
+        .catch(error => {
+          console.error('API error updating batch:', error);
+          Alert.alert('Error', 'Failed to update batch information. Please try again.');
+        });
     } catch (e) {
       console.error('Error updating batch:', e);
       Alert.alert('Error', 'Failed to update batch information. Please try again.');

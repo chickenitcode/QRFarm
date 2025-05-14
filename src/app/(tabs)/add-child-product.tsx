@@ -12,6 +12,9 @@ import { ThemedView } from '@/components/ThemedView';
 // Import the API services
 import { addBatchBlock, saveChildProduct } from '@/services/api';
 
+// Import the URL generators
+import { generateBatchUrl, generateProductUrl } from '@/config/urls';
+
 interface ChildProductData {
   id: string;
   parentId: string;
@@ -118,7 +121,7 @@ export default function AddChildProductScreen() {
       saveChildProduct(fullChildData)
         .then(() => {
           // Create QR URL using the new pattern for products
-          const qrUrl = `https://yourdomain.com/product/${uniqueId}`;
+          const qrUrl = generateProductUrl(uniqueId);
           
           setQrValue(qrUrl);
           setShowProductQR(true);
@@ -236,7 +239,7 @@ export default function AddChildProductScreen() {
     addBatchBlock(batchId, finalBlock)
       .then(() => {
         // Set the final batch QR URL
-        const batchQrUrl = `https://yourdomain.com/batch/${batchId}`;
+        const batchQrUrl = generateBatchUrl(batchId);
         
         // Show success alert
         Alert.alert(

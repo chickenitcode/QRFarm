@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Journey | QR Farm</title>
+    <title>QR Farm - Transparent Agricultural Supply Chain</title>
     <style>
-        /* Responsive design styles */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -14,354 +13,354 @@
             color: #333;
         }
         .container {
-            max-width: 600px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
-        .product-card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .product-header {
+        header {
+            background-color: #0a7ea4;
+            color: white;
+            padding: 20px 0;
             text-align: center;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 15px;
         }
-        .product-info {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 10px;
-        }
-        .product-label {
-            font-weight: bold;
-        }
-        .logo {
+        .hero {
+            background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1504057489879-8de808f540a9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            padding: 100px 20px;
             text-align: center;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 48px;
             margin-bottom: 20px;
         }
-        .logo h1 {
-            color: #0a7ea4;
-            margin: 0;
-        }
-        .error-message {
-            color: red;
-            text-align: center;
-            padding: 20px;
-        }
-        .notes {
-            margin-top: 15px;
-            background-color: #f9f9f9;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        /* Blockchain journey styling */
-        .blockchain-container {
-            margin-top: 30px;
-        }
-        .block {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            position: relative;
-        }
-        .block-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        .block-arrow {
-            position: absolute;
-            left: 50%;
-            bottom: -20px;
-            transform: translateX(-50%);
+        .hero p {
             font-size: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .search-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: -50px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .search-container h2 {
+            margin-top: 0;
             color: #0a7ea4;
-            z-index: 1;
         }
-        .block-content {
-            margin-top: 10px;
-        }
-        .block-id {
-            font-weight: bold;
-            color: #0a7ea4;
-        }
-        .actor-importer { background-color: #e3f2fd; }
-        .actor-producer { background-color: #e8f5e9; }
-        .actor-trader { background-color: #fff8e1; }
-        .actor-retailer { background-color: #fce4ec; }
-        
-        .hash-container {
-            font-family: monospace;
-            font-size: 12px;
-            color: #666;
-            word-break: break-all;
-            margin-top: 5px;
-            background-color: #f9f9f9;
-            padding: 5px;
-            border-radius: 4px;
-        }
-        .timestamp {
-            font-size: 12px;
-            color: #777;
-        }
-        /* Timeline style */
-        .timeline-container {
-            position: relative;
-            padding-left: 20px;
-        }
-        .timeline-line {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 10px;
-            width: 2px;
-            background-color: #0a7ea4;
-        }
-        .block-dot {
-            position: absolute;
-            left: -5px;
-            top: 15px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: #0a7ea4;
-        }
-        /* Link back to batch */
-        .batch-link {
-            display: inline-block;
+        .search-form {
+            display: flex;
             margin-top: 20px;
-            padding: 10px 15px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .search-button {
+            background-color: #0a7ea4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin-left: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 50px 0;
+            justify-content: space-between;
+        }
+        .feature {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            width: calc(33.333% - 20px);
+            box-sizing: border-box;
+        }
+        .feature-icon {
+            font-size: 36px;
+            color: #0a7ea4;
+            margin-bottom: 15px;
+        }
+        .recent-batches {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 50px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .batch-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .batch-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .batch-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .batch-id {
+            color: #0a7ea4;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .batch-detail {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .view-batch {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 15px;
             background-color: #0a7ea4;
             color: white;
             text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
+            border-radius: 4px;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            margin-top: 50px;
+        }
+        
+        @media (max-width: 768px) {
+            .feature {
+                width: 100%;
+            }
+            .hero h1 {
+                font-size: 32px;
+            }
+            .hero p {
+                font-size: 16px;
+            }
         }
     </style>
+    <script type="module">
+        import { getAllBatches } from './api.js';
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Set up search functionality
+            const searchButton = document.getElementById('search-button');
+            const searchInput = document.getElementById('search-input');
+            
+            searchButton.addEventListener('click', function() {
+                const searchValue = searchInput.value.trim();
+                if (!searchValue) {
+                    alert('Please enter a valid Batch ID or Product ID');
+                    return;
+                }
+                
+                // Redirect based on ID format
+                if (searchValue.startsWith('BATCH-')) {
+                    window.location.href = `./batch.html?id=${searchValue}`;
+                } else if (searchValue.startsWith('PROD-')) {
+                    window.location.href = `./product.html?id=${searchValue}`;
+                } else {
+                    alert('Invalid ID format. IDs should start with BATCH- or PROD-');
+                }
+            });
+            
+            // Allow pressing Enter to search
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchButton.click();
+                }
+            });
+            
+            try {
+                // Load recent batches
+                const batches = await getAllBatches();
+                displayRecentBatches(batches);
+            } catch (error) {
+                console.error('Error fetching recent batches:', error);
+                document.getElementById('batch-list').innerHTML = 
+                    '<p>Error loading batches. Please try again later.</p>';
+            }
+        });
+        
+        // Your existing functions...
+    </script>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
+    <header>
+        <div class="container">
             <h1>QR Farm</h1>
-            <p>Product Journey Tracker</p>
+            <p>Track your agricultural products from farm to table</p>
+        </div>
+    </header>
+    
+    <div class="hero">
+        <h1>Transparent Supply Chain</h1>
+        <p>Scan any QR code on our products to discover the complete journey - from harvest to your hands.</p>
+    </div>
+    
+    <div class="container">
+        <div class="search-container">
+            <h2>Track Your Product</h2>
+            <p>Enter a batch ID or product ID to view its complete journey</p>
+            <div class="search-form">
+                <input type="text" id="search-input" class="search-input" placeholder="Enter Batch ID or Product ID (e.g., BATCH-123ABC)">
+                <button id="search-button" class="search-button">Track</button>
+            </div>
         </div>
         
-        <div id="product-display" class="product-card">
-            <div class="product-header">
-                <h2 id="product-id">Loading product information...</h2>
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🌱</div>
+                <h3>Farm to Table Tracking</h3>
+                <p>Follow your food's journey from the farm through every stage of processing and delivery.</p>
             </div>
-            <div id="product-content">
-                <!-- Product data will be inserted here -->
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure Blockchain</h3>
+                <p>Our product data is secured using a blockchain-like structure that ensures data integrity.</p>
             </div>
-            
-            <!-- Link to parent batch (will be populated with JavaScript) -->
-            <div id="batch-link-container" style="margin-top: 20px; text-align: center;"></div>
+            <div class="feature">
+                <div class="feature-icon">🌐</div>
+                <h3>Global Network</h3>
+                <p>Our network spans multiple countries, connecting producers directly with consumers.</p>
+            </div>
         </div>
         
-        <!-- Product journey visualization -->
-        <div class="blockchain-container">
-            <h2>Product Journey</h2>
-            <p>Track this product's complete journey from producer to consumer:</p>
-            
-            <div id="blockchain-content" class="timeline-container">
-                <div class="timeline-line"></div>
-                <!-- Blocks will be added here -->
+        <div class="recent-batches">
+            <h2>Recent Batches</h2>
+            <p>Check out our latest shipments and their journeys</p>
+            <div id="batch-list" class="batch-list">
+                <!-- Batches will be loaded here -->
+                <div class="loading">Loading recent batches...</div>
             </div>
         </div>
     </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 QR Farm. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script>
+        // API URL - Update this to your actual backend URL
+        const API_BASE_URL = 'http://192.168.1.134:5000'; // For local testing
+        // For production: const API_BASE_URL = 'https://your-api-domain.com';
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Get product ID from URL
-            const pathParts = window.location.pathname.split('/');
-            const productId = pathParts[pathParts.length - 1];
+            // Set up search functionality
+            const searchButton = document.getElementById('search-button');
+            const searchInput = document.getElementById('search-input');
             
-            if (!productId || !productId.startsWith('PROD-')) {
-                showError("Invalid product ID");
-                return;
-            }
+            searchButton.addEventListener('click', function() {
+                const searchValue = searchInput.value.trim();
+                if (!searchValue) {
+                    alert('Please enter a valid Batch ID or Product ID');
+                    return;
+                }
+                
+                // Redirect based on ID format
+                if (searchValue.startsWith('BATCH-')) {
+                    window.location.href = `./batch.html?id=${searchValue}`;
+                } else if (searchValue.startsWith('PROD-')) {
+                    window.location.href = `./product.html?id=${searchValue}`;
+                } else {
+                    alert('Invalid ID format. IDs should start with BATCH- or PROD-');
+                }
+            });
             
-            // Fetch product data
-            fetchProductData(productId);
+            // Allow pressing Enter to search
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchButton.click();
+                }
+            });
+            
+            // Load recent batches
+            fetchRecentBatches();
         });
         
-        function fetchProductData(productId) {
-            // In a real app, this would be an API call
-            // For demo purposes, we'll try localStorage first
-            
-            let productData = null;
+        async function fetchRecentBatches() {
             try {
-                const storedData = localStorage.getItem(`product_${productId}`);
-                if (storedData) {
-                    productData = JSON.parse(storedData);
-                    displayProductData(productData);
-                } else {
-                    // If not in localStorage, would fetch from API
-                    fetchFromApi(productId);
+                const response = await fetch(`${API_BASE_URL}/batches`);
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
                 }
-            } catch (e) {
-                console.error('Error retrieving data:', e);
-                fetchFromApi(productId);
+                
+                const batches = await response.json();
+                displayRecentBatches(batches);
+                
+            } catch (error) {
+                console.error('Error fetching recent batches:', error);
+                document.getElementById('batch-list').innerHTML = 
+                    '<p>Error loading batches. Please try again later.</p>';
             }
         }
         
-        function fetchFromApi(productId) {
-            // This would be implemented to call your backend API
-            // For demo, show a message
-            showError("Product data not found locally. In a real implementation, this would fetch from your backend API.");
+        function displayRecentBatches(batches) {
+            const batchList = document.getElementById('batch-list');
+            batchList.innerHTML = '';
             
-            // Sample of how the API call would look:
-            // fetch(`https://api.yourdomain.com/products/${productId}`)
-            //   .then(response => {
-            //     if (!response.ok) throw new Error('Product not found');
-            //     return response.json();
-            //   })
-            //   .then(data => displayProductData(data))
-            //   .catch(error => showError(`Error: ${error.message}`));
-        }
-        
-        function displayProductData(product) {
-            document.getElementById('product-id').textContent = `Product: ${product.id}`;
+            // Limit to 6 most recent batches
+            const recentBatches = batches.slice(0, 6);
             
-            // Get initial block data (producer)
-            const initialBlock = product.blocks && product.blocks.length > 0 
-                ? product.blocks[0] 
-                : null;
-                
-            if (!initialBlock) {
-                showError("Product data is incomplete - no blockchain data found");
+            if (recentBatches.length === 0) {
+                batchList.innerHTML = '<p>No batches available at the moment.</p>';
                 return;
             }
             
-            // Display product details from the initial block
-            const productDetails = initialBlock.data.productDetails;
-            const content = document.getElementById('product-content');
-            
-            content.innerHTML = `
-                <div class="product-info">
-                    <span class="product-label">Weight:</span>
-                    <span>${productDetails.weight} kg</span>
-                    
-                    <span class="product-label">Size:</span>
-                    <span>${productDetails.size} cm</span>
-                    
-                    ${productDetails.quality ? `
-                    <span class="product-label">Quality:</span>
-                    <span>${productDetails.quality}</span>
-                    ` : ''}
-                    
-                    <span class="product-label">Producer:</span>
-                    <span>${initialBlock.actor}</span>
-                    
-                    <span class="product-label">Origin:</span>
-                    <span>${initialBlock.location}</span>
-                </div>
+            recentBatches.forEach(batch => {
+                const batchId = batch._id || batch.id;
+                const batchEl = document.createElement('div');
+                batchEl.className = 'batch-card';
                 
-                ${initialBlock.data.notes ? `
-                <div class="notes">
-                    <h3>Producer Notes:</h3>
-                    <p>${initialBlock.data.notes}</p>
-                </div>
-                ` : ''}
-            `;
-            
-            // Add link to parent batch/shipment
-            const batchLinkContainer = document.getElementById('batch-link-container');
-            batchLinkContainer.innerHTML = `
-                <a href="/batch/${product.parentId}" class="batch-link">
-                    View Parent BATCH: ${product.parentId}
-                </a>
-            `;
-            
-            // Display the blockchain journey
-            displayBlockchain(product.blocks);
-        }
-        
-        function displayBlockchain(blocks) {
-            if (!blocks || blocks.length === 0) {
-                return;
-            }
-            
-            const blocksContainer = document.getElementById('blockchain-content');
-            
-            // Clear previous content except timeline
-            blocksContainer.innerHTML = '<div class="timeline-line"></div>';
-            
-            // Sort blocks by blockId to ensure proper order
-            const sortedBlocks = [...blocks].sort((a, b) => a.blockId - b.blockId);
-            
-            // Render each block in the chain
-            sortedBlocks.forEach((block, index) => {
-                const isLastBlock = index === sortedBlocks.length - 1;
-                const blockDate = new Date(block.timestamp).toLocaleDateString();
-                const blockTime = new Date(block.timestamp).toLocaleTimeString();
-                
-                const blockEl = document.createElement('div');
-                blockEl.className = `block actor-${block.actorType}`;
-                blockEl.innerHTML = `
-                    <div class="block-dot"></div>
-                    <div class="block-header">
-                        <span class="block-id">${getBlockLabel(block.actorType, block.blockId)}</span>
-                        <span class="timestamp">${blockDate} ${blockTime}</span>
-                    </div>
-                    <div class="block-content">
-                        <p><strong>Actor:</strong> ${block.actor} (${capitalizeFirstLetter(block.actorType)})</p>
-                        <p><strong>Location:</strong> ${block.location}</p>
-                        ${renderBlockData(block.data)}
-                    </div>
-                    <div class="hash-container">
-                        <div><strong>Hash:</strong> ${block.hash}</div>
-                    </div>
-                    ${!isLastBlock ? '<div class="block-arrow">↓</div>' : ''}
+                batchEl.innerHTML = `
+                    <div class="batch-id">${batchId}</div>
+                    <div class="batch-detail"><strong>Product:</strong> ${batch.productType}</div>
+                    <div class="batch-detail"><strong>Origin:</strong> ${batch.location}</div>
+                    <div class="batch-detail"><strong>Harvested:</strong> ${formatDate(batch.harvestDate)}</div>
+                    <div class="batch-detail"><strong>Quantity:</strong> ${batch.quantity} products</div>
+                    <a href="./batch.html?id=${batchId}" class="view-batch">View Details</a>
                 `;
                 
-                blocksContainer.appendChild(blockEl);
+                batchList.appendChild(batchEl);
             });
         }
         
-        function getBlockLabel(actorType, blockId) {
-            if (blockId === 0) return "Production";
+        function formatDate(dateInput) {
+            if (!dateInput) return 'Unknown';
             
-            switch(actorType) {
-                case 'importer': return "Import";
-                case 'trader': return "Distribution";
-                case 'retailer': return "Retail";
-                default: return `Step ${blockId + 1}`;
-            }
-        }
-        
-        function renderBlockData(data) {
-            if (!data) return '';
-            
-            // For block 0 (production data)
-            if (data.productDetails) {
-                return `
-                    <p><strong>Action:</strong> Initial production</p>
-                    ${data.notes ? `<p><strong>Notes:</strong> ${data.notes}</p>` : ''}
-                `;
+            let date;
+            if (typeof dateInput === 'number') {
+                date = new Date(dateInput);
+            } else {
+                date = new Date(dateInput);
             }
             
-            // For other blocks
-            return `
-                <p><strong>Action:</strong> ${capitalizeFirstLetter(data.action || 'handling')}</p>
-                <p><strong>Details:</strong> ${data.details || 'No details provided'}</p>
-            `;
-        }
-        
-        function capitalizeFirstLetter(string) {
-            return string.charAt(0).toUpperCase() + string.slice(1);
-        }
-        
-        function showError(message) {
-            const productDisplay = document.getElementById('product-display');
-            productDisplay.innerHTML = `<div class="error-message">${message}</div>`;
+            if (isNaN(date.getTime())) {
+                return String(dateInput);
+            }
+            
+            return date.toLocaleDateString();
         }
     </script>
 </body>
