@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL - Replace with your actual backend URL
-const API_BASE_URL = 'http://192.168.1.134:5000'; // Use your computer's local IP for local testing
+const API_BASE_URL = 'http://192.168.1.182:5000'; // Use your computer's local IP for local testing
 // For production, use your deployed URL: const API_BASE_URL = 'https://your-api-domain.com/api';
 
 // Create axios instance

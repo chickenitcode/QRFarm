@@ -119,9 +119,43 @@
             text-decoration: none;
             border-radius: 4px;
         }
+        .batch-journey {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .batch-journey .timeline::after {
+            background-color: #4a9d5e; /* Different color for batch timeline */
+        }
+
+        .batch-journey .timeline-item::after {
+            border-color: #4a9d5e; /* Different color for batch timeline markers */
+        }
+
+        .batch-journey .timeline-title {
+            color: #4a9d5e; /* Different color for batch timeline titles */
+        }
+
+        .timeline-indicator {
+            display: inline-block;
+            margin-left: 5px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: white;
+        }
+
+        .product-indicator {
+            background-color: #0a7ea4;
+        }
+
+        .batch-indicator {
+            background-color: #4a9d5e;
+        }
     </style>
     <script type="module">
-      import { getProduct } from './api.js';
+      import { getProduct, getBatch } from './api.js';
       
       document.addEventListener('DOMContentLoaded', async function() {
         // Get product ID from URL parameter
@@ -142,6 +176,15 @@
           
           // Display product journey
           displayProductJourney(productData);
+          
+          // Now also fetch and display the batch journey
+          if (productData.batchId) {
+            // Get batch data using the product's batchId
+            const batchData = await getBatch(productData.batchId);
+            
+            // Display batch journey
+            displayBatchJourney(batchData);
+          }
           
           // Generate QR code for sharing
           generateQRCode(productId);
@@ -177,6 +220,16 @@
             <div id="timeline" class="timeline">
                 <!-- Timeline items will be inserted here -->
                 <p id="timeline-loading">Loading product journey...</p>
+            </div>
+        </div>
+        
+        <div class="journey-timeline batch-journey">
+            <h2>Batch Journey</h2>
+            <p>Traceability information of the entire batch this product belongs to:</p>
+            
+            <div id="batch-timeline" class="timeline">
+                <!-- Batch timeline items will be inserted here -->
+                <p id="batch-timeline-loading">Loading batch journey...</p>
             </div>
         </div>
         
@@ -232,14 +285,22 @@
             const initialBlock = product.blocks && product.blocks.length > 0 
                 ? product.blocks[0] 
                 : null;
-                
+                    
             const details = initialBlock?.data?.productDetails || {};
             
             const content = document.getElementById('product-content');
             content.innerHTML = `
                 <div class="product-info">
                     <span class="info-label">Batch ID:</span>
-                    <span>${product.batchId || 'Unknown'}</span>
+                    <span>
+                        ${product.batchId || 'Unknown'} 
+                        <a href="./batch.html?id=${product.batchId}" style="color: #0a7ea4; margin-left: 5px;">
+                            View entire batch
+                        </a>
+                    </span>
+                    
+                    <span class="info-label">Product Type:</span>
+                    <span>${product.productType || details.productType || 'Unknown'}</span>
                     
                     <span class="info-label">Weight:</span>
                     <span>${details.weight || product.weight || 'N/A'} kg</span>
@@ -257,9 +318,6 @@
                        
                     <span class="info-label">Created:</span>
                     <span>${initialBlock ? formatDate(initialBlock.timestamp) : 'Unknown'}</span>
-                    
-                    <span class="info-label">View Batch:</span>
-                    <span><a href="./batch.html?id=${product.batchId}" style="color: #0a7ea4;">View entire batch</a></span>
                 </div>
             `;
         }
@@ -281,7 +339,10 @@
                 timelineHTML += `
                     <div class="timeline-item">
                         <div class="timeline-content">
-                            <div class="timeline-title">${getStepTitle(block.actorType)} (Step ${index + 1})</div>
+                            <div class="timeline-title">
+                                ${getStepTitle(block.actorType)} (Step ${index + 1})
+                                <span class="timeline-indicator product-indicator">Product</span>
+                            </div>
                             <div class="timeline-details"><strong>Actor:</strong> ${block.actor}</div>
                             <div class="timeline-details"><strong>Location:</strong> ${block.location}</div>
                             <div class="timeline-details"><strong>Date:</strong> ${formatDate(block.timestamp)}</div>
@@ -370,6 +431,58 @@
         function showError(message) {
             const productDisplay = document.getElementById('product-display');
             productDisplay.innerHTML = `<div class="error-message" style="color: red; padding: 20px; text-align: center;">${message}</div>`;
+        }
+
+        function displayBatchJourney(batch) {
+            const batchTimeline = document.getElementById('batch-timeline');
+            
+            // Remove loading message
+            document.getElementById('batch-timeline-loading').remove();
+            
+            if (!batch.blocks || batch.blocks.length === 0) {
+                batchTimeline.innerHTML = '<p>No journey data available for this batch</p>';
+                return;
+            }
+            
+            let timelineHTML = '';
+            
+            batch.blocks.forEach((block, index) => {
+                timelineHTML += `
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <div class="timeline-title">
+                                ${getBlockTitle(block)}
+                                <span class="timeline-indicator batch-indicator">Batch</span>
+                            </div>
+                            <div class="timeline-details"><strong>Actor:</strong> ${block.actor}</div>
+                            <div class="timeline-details"><strong>Location:</strong> ${block.location}</div>
+                            <div class="timeline-details"><strong>Date:</strong> ${formatDate(block.timestamp)}</div>
+                            ${block.data?.stageName ? `<div class="timeline-details"><strong>Stage:</strong> ${block.data.stageName}</div>` : ''}
+                            ${block.data?.notes ? `<div class="timeline-details"><strong>Notes:</strong> ${block.data.notes}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            batchTimeline.innerHTML = timelineHTML;
+        }
+
+        // Add this new helper function
+        function getBlockTitle(block) {
+            if (block.data?.stageName) {
+                return block.data.stageName;
+            }
+            
+            if (block.data?.action) {
+                switch(block.data.action) {
+                    case 'batch_created': return 'Batch Created';
+                    case 'batch_updated': return 'Batch Updated';
+                    case 'batch_completed': return 'Batch Completed';
+                    default: return block.data.action;
+                }
+            }
+            
+            return `Processing Step ${block.blockId + 1}`;
         }
     </script>
 </body>
