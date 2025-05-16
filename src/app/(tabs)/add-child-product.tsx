@@ -10,7 +10,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
 // Import the API services
-import { addBatchBlock, saveChildProduct } from '@/services/api';
+import { addBatchBlock, getBatch, saveChildProduct } from '@/services/api';
 
 // Import the URL generators
 import { generateBatchUrl, generateProductUrl } from '@/config/urls';
@@ -219,24 +219,35 @@ export default function AddChildProductScreen() {
       );
       return;
     }
-  
-    // Create a final block for the batch completion
-    const finalBlock = {
-      blockId: 1, // In production, you should get the max blockId and increment
-      timestamp: Date.now(),
-      actor: "System",
-      location: batchData?.location || "Unknown",
-      data: {
-        action: "batch_completed",
-        quantity: productCount,
-        status: "Completed"
-      },
-      prevHash: "0", // This should be the hash of the previous block
-      hash: calculateHash(1, "0", JSON.stringify({ quantity: productCount }))
-    };
-    
-    // Add the final block to the batch chain using the API
-    addBatchBlock(batchId, finalBlock)
+
+    // First, get the current batch to find the previous block's hash
+    getBatch(batchId)
+      .then(batch => {
+        // Get the last block in the chain
+        const lastBlock = batch.blocks[batch.blocks.length - 1];
+        const prevHash = lastBlock.hash;
+        
+        // Create a final block for the batch completion with correct prevHash
+        const finalBlock = {
+          blockId: batch.blocks.length, // Correct incremental blockId
+          timestamp: Date.now(),
+          actor: "System",
+          location: batchData?.location || "Unknown",
+          data: {
+            action: "batch_completed",
+            quantity: productCount,
+            status: "Completed"
+          },
+          prevHash: prevHash, // Use the hash from the previous block!
+          hash: calculateHash(batch.blocks.length, prevHash, JSON.stringify({ 
+            quantity: productCount, 
+            status: "Completed" 
+          }))
+        };
+        
+        // Add the final block to the batch chain using the API
+        return addBatchBlock(batchId, finalBlock);
+      })
       .then(() => {
         // Set the final batch QR URL
         const batchQrUrl = generateBatchUrl(batchId);

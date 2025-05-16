@@ -31,8 +31,7 @@ export default function ScanForUpdateScreen() {
     }
     
     try {
-      console.log('QR Code scanned:', data);
-      
+
       // NEW: Check for product.html?id= format
       if (data.includes('product.html?id=')) {
         // Extract the ID from URL query parameter
