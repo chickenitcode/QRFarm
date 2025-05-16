@@ -31,8 +31,38 @@ export default function ScanForUpdateScreen() {
     }
     
     try {
-      // First, check if this is a product QR code
-      if (data.includes('/product/')) {
+      console.log('QR Code scanned:', data);
+      
+      // NEW: Check for product.html?id= format
+      if (data.includes('product.html?id=')) {
+        // Extract the ID from URL query parameter
+        const urlObj = new URL(data);
+        const productId = urlObj.searchParams.get('id');
+        
+        if (productId) {
+          router.navigate({
+            pathname: '/(tabs)/update-product',
+            params: { productId }
+          });
+          return;
+        }
+      } 
+      // NEW: Check for batch.html?id= format
+      else if (data.includes('batch.html?id=')) {
+        // Extract the ID from URL query parameter
+        const urlObj = new URL(data);
+        const batchId = urlObj.searchParams.get('id');
+        
+        if (batchId) {
+          router.navigate({
+            pathname: '/(tabs)/update-batch',
+            params: { batchId }
+          });
+          return;
+        }
+      }
+      // LEGACY: Keep old URL format checks for backward compatibility
+      else if (data.includes('/product/')) {
         // Extract ID from URL like https://yourdomain.com/product/PROD-123
         const urlParts = data.split('/');
         const productId = urlParts[urlParts.length - 1];
@@ -45,7 +75,7 @@ export default function ScanForUpdateScreen() {
           return;
         }
       } 
-      // Check if it's a batch QR code
+      // LEGACY: Check if it's a batch QR code in old format
       else if (data.includes('/batch/')) {
         // Extract ID from URL like https://yourdomain.com/batch/SHIP-123
         const urlParts = data.split('/');
@@ -67,7 +97,7 @@ export default function ScanForUpdateScreen() {
         });
         return;
       }
-      else if (data.startsWith('SHIP-')) {
+      else if (data.startsWith('SHIP-') || data.startsWith('BATCH-')) {
         router.navigate({
           pathname: '/(tabs)/update-batch',
           params: { batchId: data }
