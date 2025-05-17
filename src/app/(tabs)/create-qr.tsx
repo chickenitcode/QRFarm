@@ -1,8 +1,9 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -146,6 +147,25 @@ export default function CreateBatchScreen() {
       responsibleStaff: '',
     });
   };
+
+  // Add this hook to reset form when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      // Reset form state when screen comes into focus
+      setBatchData({
+        productType: '',
+        harvestDate: new Date(),
+        location: '',
+        responsibleStaff: '',
+      });
+      setShowDatePicker(false);
+      setBatchId('');
+      
+      return () => {
+        // Clean up if needed
+      };
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.container}>

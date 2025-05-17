@@ -1,13 +1,15 @@
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+
 
 // Import the API services
 import { addBatchBlock, getBatch, saveChildProduct } from '@/services/api';
@@ -61,16 +63,45 @@ export default function AddChildProductScreen() {
   const [batchQRValue, setBatchQRValue] = useState('');
   const [showProductQR, setShowProductQR] = useState(false);
   
-  useEffect(() => {
-    if (batchDataString) {
-      try {
-        const parsed = JSON.parse(batchDataString);
-        setBatchData(parsed);
-      } catch (error) {
-        console.error('Failed to parse batch data:', error);
+  // Add this useFocusEffect hook to reset state when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      console.log('AddChildProductScreen focused with batchId:', batchId);
+      
+      // Parse batch data from params
+      if (batchDataString) {
+        try {
+          const parsed = JSON.parse(batchDataString);
+          setBatchData(parsed);
+        } catch (error) {
+          console.error('Failed to parse batch data:', error);
+        }
       }
-    }
-  }, [batchDataString]);
+      
+      // Reset product form state
+      setChildProduct({
+        weight: 0,
+        size: '',
+        quality: '',
+        additionalNotes: '',
+        blocks: [],
+      });
+      
+      // Reset all QR and display state
+      setQrValue('');
+      setProductId('');
+      setShowQR(false);
+      setShowProductQR(false);
+      setShowBatchQR(false);
+      
+      // Reset product count when a new batch is started
+      setProductCount(0);
+      
+      return () => {
+        // Clean up if needed
+      };
+    }, [batchId, batchDataString])
+  );
   
   const updateField = (field: keyof Omit<ChildProductData, 'id' | 'parentId'>, value: string | number) => {
     setChildProduct(prev => ({ ...prev, [field]: value }));
@@ -207,7 +238,11 @@ export default function AddChildProductScreen() {
       additionalNotes: '',
       blocks: [],
     });
+    
+    // Hide all QR displays
     setShowQR(false);
+    setShowProductQR(false);  // Add this line to hide product QR
+    setShowBatchQR(false);    // Also hide batch QR just in case
   };
 
   const completeBatch = () => {
@@ -252,25 +287,16 @@ export default function AddChildProductScreen() {
         // Set the final batch QR URL
         const batchQrUrl = generateBatchUrl(batchId);
         
-        // Show success alert
-        Alert.alert(
-          'Batch Completed',
-          `Batch ${batchId} has been completed with ${productCount} products.`,
-          [
-            { 
-              text: 'View Batch QR', 
-              onPress: () => {
-                setShowQR(false);
-                setBatchQRValue(batchQrUrl);
-                setShowBatchQR(true);
-              } 
-            },
-            { 
-              text: 'Done', 
-              onPress: () => router.navigate('/(tabs)')
-            }
-          ]
-        );
+        // No alert - directly show the batch QR and add a "Home" button
+        setShowQR(false);
+        setShowProductQR(false);
+        setBatchQRValue(batchQrUrl);
+        setShowBatchQR(true);
+        
+        // Provide haptic feedback on success
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
       })
       .catch(error => {
         console.error('Failed to update batch:', error);
@@ -298,6 +324,24 @@ export default function AddChildProductScreen() {
         resolve();
       }, 500); // Simulate half-second delay
     });
+  };
+
+  // Add this function at the same level as other functions in your component
+  const printQRCode = (id: string, type: 'product' | 'batch') => {
+    console.log(`Printing ${type} QR code for ID: ${id}`);
+    // In a real implementation, you would connect to a printer API
+    // or generate a PDF for printing
+    
+    // Provide haptic feedback on print
+    if (Platform.OS === 'ios') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    
+    Alert.alert(
+      'Print Requested',
+      `Printing ${type} QR code for ${id}`,
+      [{ text: 'OK' }]
+    );
   };
 
   return (
@@ -443,6 +487,17 @@ export default function AddChildProductScreen() {
                 {qrValue}
               </ThemedText>
               
+              {/* Add Print Button */}
+              <TouchableOpacity 
+                style={styles.printButton} 
+                onPress={() => printQRCode(productId, 'product')}
+                activeOpacity={0.7}
+              >
+                <ThemedText style={styles.printButtonText}>
+                  Print QR Code
+                </ThemedText>
+              </TouchableOpacity>
+              
               <View style={styles.actionButtonsContainer}>
                 <TouchableOpacity 
                   style={styles.actionButton} 
@@ -481,6 +536,39 @@ export default function AddChildProductScreen() {
               <ThemedText style={styles.infoText}>
                 Quantity: {productCount}
               </ThemedText>
+              
+              {/* Print Button */}
+              <TouchableOpacity 
+                style={styles.printButton} 
+                onPress={() => printQRCode(batchId, 'batch')}
+                activeOpacity={0.7}
+              >
+                <ThemedText style={styles.printButtonText}>
+                  Print QR Code
+                </ThemedText>
+              </TouchableOpacity>
+              
+              {/* Add New Batch Button */}
+              <TouchableOpacity 
+                style={styles.addBatchButton} 
+                onPress={() => router.push('/(tabs)/create-qr')}
+                activeOpacity={0.7}
+              >
+                <ThemedText style={styles.addBatchButtonText}>
+                  Add New Batch
+                </ThemedText>
+              </TouchableOpacity>
+              
+              {/* Home Button */}
+              <TouchableOpacity 
+                style={styles.homeButton} 
+                onPress={() => router.navigate('/(tabs)')}
+                activeOpacity={0.7}
+              >
+                <ThemedText style={styles.homeButtonText}>
+                  Home
+                </ThemedText>
+              </TouchableOpacity>
             </ThemedView>
           )}
         </ScrollView>
@@ -612,5 +700,44 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     marginBottom: 16,
+  },
+  printButton: {
+    backgroundColor: '#5C6BC0',  // Indigo color
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 16,
+    width: '80%',
+  },
+  printButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  addBatchButton: {
+    backgroundColor: '#007BFF', // Bootstrap primary color
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 12,
+    width: '80%',
+  },
+  addBatchButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  homeButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 12,
+    width: '80%',
+  },
+  homeButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

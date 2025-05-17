@@ -248,7 +248,7 @@
 
     <script>
         // API URL - Update this to your actual backend URL
-        const API_BASE_URL = 'http://192.168.1.134:5000'; // For local testing
+        const API_BASE_URL = 'http://192.168.1.246:5000'; // For local testing
         // For production: const API_BASE_URL = 'https://your-api-domain.com';
         
         async function fetchProductData(productId) {
@@ -333,6 +333,11 @@
                 return;
             }
             
+            if(!validateChain(product.blocks)) {
+                showError("Product journey data is corrupted. Please contact support.");
+                return;
+            }
+
             let timelineHTML = '';
             
             product.blocks.forEach((block, index) => {
@@ -435,6 +440,11 @@
 
         function displayBatchJourney(batch) {
             const batchTimeline = document.getElementById('batch-timeline');
+
+            if(!validateChain(batch.blocks)) {
+                showError("Product journey data is corrupted. Please contact support.");
+                return;
+            }
             
             // Remove loading message
             document.getElementById('batch-timeline-loading').remove();
@@ -483,6 +493,65 @@
             }
             
             return `Processing Step ${block.blockId + 1}`;
+        }
+
+        // Add this function to your validateChain function
+        function calculateHash(blockId, prevHash, data, timestamp) {
+        // Use the block's original timestamp for hash calculation
+        // This matches how the hash was originally calculated in React Native
+        const dataToHash = `${blockId}:${prevHash}:${data}:${timestamp}`;
+        
+        // This is the same simplified hash algorithm from create-qr.tsx
+        return Array.from(dataToHash)
+            .reduce((hash, char) => hash ^ char.charCodeAt(0) + ((hash << 5) - hash), 0)
+            .toString(16);
+        }
+
+        function validateChain(blocks) {
+        // Chain must have at least one block
+        if (!blocks || blocks.length === 0) return true;
+        
+            for (let i = 1; i < blocks.length; i++) {
+                const currentBlock = blocks[i];
+                const previousBlock = blocks[i-1];
+
+                console.log(`Validating block ${currentBlock.blockId}`);
+                
+                // Check if prevHash matches previous block's hash
+                if (currentBlock.prevHash !== previousBlock.hash) {
+                console.error(`Chain broken at block ${i}: prevHash mismatch`);
+                console.error(`Expected: ${previousBlock.hash}, Found: ${currentBlock.prevHash}`);
+                return false;
+                }
+
+                // Recalculate hash to verify block data hasn't been changed
+                // IMPORTANT: Pass the block's original timestamp to match original hash calculation
+                const recalculatedHash = calculateHash(
+                currentBlock.blockId,
+                currentBlock.prevHash,
+                JSON.stringify(currentBlock.data),
+                currentBlock.timestamp  // Use the block's original timestamp
+                );
+                
+                console.log(`Original hash: ${currentBlock.hash}`);
+                console.log(`Recalculated: ${recalculatedHash}`);
+
+                // Add this to your validateChain function
+                console.log('Block data for validation:', {
+                blockId: currentBlock.blockId,
+                prevHash: currentBlock.prevHash,
+                data: JSON.stringify(currentBlock.data),
+                timestamp: currentBlock.timestamp,
+                originalHash: currentBlock.hash
+                });
+
+                if (recalculatedHash !== currentBlock.hash) {
+                console.error(`Chain broken at block ${i}: hash verification failed`);
+                return false;
+                }
+            }
+        
+        return true;
         }
     </script>
 </body>
