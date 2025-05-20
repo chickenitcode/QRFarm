@@ -154,48 +154,6 @@
             background-color: #4a9d5e;
         }
     </style>
-    <script type="module">
-      import { getProduct, getBatch } from './api.js';
-      
-      document.addEventListener('DOMContentLoaded', async function() {
-        // Get product ID from URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-        
-        if (!productId) {
-          showError("Product ID not found in URL. Please use format: product.html?id=PROD-XXX");
-          return;
-        }
-        
-        try {
-          // Get product data
-          const productData = await getProduct(productId);
-          
-          // Display product data
-          displayProductData(productData);
-          
-          // Display product journey
-          displayProductJourney(productData);
-          
-          // Now also fetch and display the batch journey
-          if (productData.batchId) {
-            // Get batch data using the product's batchId
-            const batchData = await getBatch(productData.batchId);
-            
-            // Display batch journey
-            displayBatchJourney(batchData);
-          }
-          
-          // Generate QR code for sharing
-          generateQRCode(productId);
-        } catch (error) {
-          console.error('Error loading product data:', error);
-          showError(`Error loading product data: ${error.message}`);
-        }
-      });
-      
-      // Your existing functions...
-    </script>
 </head>
 <body>
     <div class="container">
@@ -245,12 +203,48 @@
             <a href="./index.html" class="back-link">Back to Home</a>
         </div>
     </div>
-
-    <script>
-        // API URL - Update this to your actual backend URL
-        const API_BASE_URL = 'http://192.168.1.246:5000'; // For local testing
-        // For production: const API_BASE_URL = 'https://your-api-domain.com';
+    <script type="module">
+      import { getProduct, getBatch } from './api.js';
+      
+      document.addEventListener('DOMContentLoaded', async function() {
+        // Get product ID from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
         
+        if (!productId) {
+          showError("Product ID not found in URL. Please use format: product.html?id=PROD-XXX");
+          return;
+        }
+        
+        try {
+          // Get product data
+          const productData = await getProduct(productId);
+          const batchData = await getBatch(productData.batchId);
+          console.log('Batch data:', batchData.productType);
+          
+          // Display product data
+          displayProductData(productData, batchData.productType);
+          
+          // Display product journey
+          displayProductJourney(productData);
+          
+          // Now also fetch and display the batch journey
+          if (productData.batchId) {
+            // Get batch data using the product's batchId
+            const batchData = await getBatch(productData.batchId);
+            
+            // Display batch journey
+            displayBatchJourney(batchData);
+          }
+          
+          // Generate QR code for sharing
+          generateQRCode(productId);
+        } catch (error) {
+          console.error('Error loading product data:', error);
+          showError(`Error loading product data: ${error.message}`);
+        }
+      });
+
         async function fetchProductData(productId) {
             try {
                 // Show loading state
@@ -277,10 +271,10 @@
             }
         }
         
-        function displayProductData(product) {
+        function displayProductData(product, productType) {
             const productId = product._id || product.id;
             document.getElementById('product-id').textContent = `Product: ${productId}`;
-            
+        
             // Find initial product details from the first block
             const initialBlock = product.blocks && product.blocks.length > 0 
                 ? product.blocks[0] 
@@ -300,7 +294,7 @@
                     </span>
                     
                     <span class="info-label">Product Type:</span>
-                    <span>${product.productType || details.productType || 'Unknown'}</span>
+                    <span>${productType || 'Unknown'}</span>
                     
                     <span class="info-label">Weight:</span>
                     <span>${details.weight || product.weight || 'N/A'} kg</span>
