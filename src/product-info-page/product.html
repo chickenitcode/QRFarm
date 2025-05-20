@@ -153,6 +153,48 @@
         .batch-indicator {
             background-color: #4a9d5e;
         }
+
+        .recipe-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .recipe-card {
+            border-left: 4px solid #4a9d5e;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .recipe-title {
+            font-weight: bold;
+            color: #4a9d5e;
+            margin-bottom: 5px;
+        }
+
+        .recipe-description {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        #refresh-recipes {
+            background-color: #4a9d5e;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        #refresh-recipes:hover {
+            background-color: #3a8d4e;
+        }
     </style>
 </head>
 <body>
@@ -198,79 +240,79 @@
                 <!-- QR code will be inserted here -->
             </div>
         </div>
+
+        <div class="recipe-section">
+            <h2>What can you make with this?</h2>
+            <p id="recipe-loading">Loading recipe ideas...</p>
+            <div id="recipe-suggestions" style="display: none;">
+                <!-- Recipe suggestions will appear here -->
+            </div>
+            <button id="refresh-recipes" style="display: none;">More Ideas</button>
+        </div>
         
         <div style="text-align: center; margin: 30px 0;">
             <a href="./index.html" class="back-link">Back to Home</a>
         </div>
     </div>
     <script type="module">
-      import { getProduct, getBatch } from './api.js';
+  import { getProduct, getBatch, getRecipeSuggestions as fetchRecipeSuggestions } from './api.js';
+  
+  document.addEventListener('DOMContentLoaded', async function() {
+    // Get product ID from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    
+    if (!productId) {
+      showError("Product ID not found in URL. Please use format: product.html?id=PROD-XXX");
+      return;
+    }
+    
+    try {
+      // Get product data
+      const productData = await getProduct(productId);
+      const batchData = await getBatch(productData.batchId);
       
-      document.addEventListener('DOMContentLoaded', async function() {
-        // Get product ID from URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-        
-        if (!productId) {
-          showError("Product ID not found in URL. Please use format: product.html?id=PROD-XXX");
-          return;
-        }
-        
-        try {
-          // Get product data
-          const productData = await getProduct(productId);
-          const batchData = await getBatch(productData.batchId);
-          console.log('Batch data:', batchData.productType);
-          
-          // Display product data
-          displayProductData(productData, batchData.productType);
-          
-          // Display product journey
-          displayProductJourney(productData);
-          
-          // Now also fetch and display the batch journey
-          if (productData.batchId) {
-            // Get batch data using the product's batchId
-            const batchData = await getBatch(productData.batchId);
-            
-            // Display batch journey
-            displayBatchJourney(batchData);
-          }
-          
-          // Generate QR code for sharing
-          generateQRCode(productId);
-        } catch (error) {
-          console.error('Error loading product data:', error);
-          showError(`Error loading product data: ${error.message}`);
-        }
-      });
+      // Display product data
+      displayProductData(productData, batchData.productType);
+      
+      // Display product journey
+      displayProductJourney(productData);
+      
+      // Now also fetch and display the batch journey
+      if (productData.batchId) {
+        // Display batch journey using the already fetched batchData
+        displayBatchJourney(batchData);
+      }
+      
+      // Generate QR code for sharing
+      generateQRCode(productId);
+    } catch (error) {
+      console.error('Error loading product data:', error);
+      showError(`Error loading product data: ${error.message}`);
+    }
+  });
 
-        async function fetchProductData(productId) {
-            try {
-                // Show loading state
-                document.getElementById('product-id').textContent = 'Loading product information...';
-                
-                // Get product data from API
-                const response = await fetch(`${API_BASE_URL}/products/${productId}`);
-                
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.status}`);
-                }
-                
-                const productData = await response.json();
-                
-                // Display product data
-                displayProductData(productData);
-                
-                // Display product journey
-                displayProductJourney(productData);
-                
-            } catch (error) {
-                console.error('Error fetching product data:', error);
-                showError("Error loading product data. " + error.message);
-            }
-        }
-        
+  // Replace the fetchProductData function with this refactored version
+  async function fetchProductData(productId) {
+    try {
+      // Show loading state
+      document.getElementById('product-id').textContent = 'Loading product information...';
+      
+      // Get product data using the imported API function
+      const productData = await getProduct(productId);
+      
+      // Display product data
+      displayProductData(productData);
+      
+      // Display product journey
+      displayProductJourney(productData);
+      
+    } catch (error) {
+      console.error('Error fetching product data:', error);
+      showError("Error loading product data. " + error.message);
+    }
+  }
+
         function displayProductData(product, productType) {
             const productId = product._id || product.id;
             document.getElementById('product-id').textContent = `Product: ${productId}`;
@@ -314,6 +356,14 @@
                     <span>${initialBlock ? formatDate(initialBlock.timestamp) : 'Unknown'}</span>
                 </div>
             `;
+
+            if (productType && productType !== 'Unknown') {
+                loadRecipeSuggestions(productType);
+            } else {
+                document.getElementById('recipe-loading').textContent = 
+                'Product type unknown. Cannot suggest recipes.';
+            }
+        
         }
         
         function displayProductJourney(product) {
@@ -508,8 +558,6 @@
             for (let i = 1; i < blocks.length; i++) {
                 const currentBlock = blocks[i];
                 const previousBlock = blocks[i-1];
-
-                console.log(`Validating block ${currentBlock.blockId}`);
                 
                 // Check if prevHash matches previous block's hash
                 if (currentBlock.prevHash !== previousBlock.hash) {
@@ -526,18 +574,6 @@
                 JSON.stringify(currentBlock.data),
                 currentBlock.timestamp  // Use the block's original timestamp
                 );
-                
-                console.log(`Original hash: ${currentBlock.hash}`);
-                console.log(`Recalculated: ${recalculatedHash}`);
-
-                // Add this to your validateChain function
-                console.log('Block data for validation:', {
-                blockId: currentBlock.blockId,
-                prevHash: currentBlock.prevHash,
-                data: JSON.stringify(currentBlock.data),
-                timestamp: currentBlock.timestamp,
-                originalHash: currentBlock.hash
-                });
 
                 if (recalculatedHash !== currentBlock.hash) {
                 console.error(`Chain broken at block ${i}: hash verification failed`);
@@ -546,6 +582,58 @@
             }
         
         return true;
+        }
+
+        // Add this to your existing script
+        async function loadRecipeSuggestions(productType) {
+          const recipeLoading = document.getElementById('recipe-loading');
+          const recipeSuggestions = document.getElementById('recipe-suggestions');
+          const refreshButton = document.getElementById('refresh-recipes');
+          
+          try {
+            // Use the imported API function
+            const data = await fetchRecipeSuggestions(productType);
+            // For testing, use the mock function
+            //const recipeMockData = await mockRecipes(productType);
+            // Display the recipes
+            recipeLoading.style.display = 'none';
+            recipeSuggestions.style.display = 'block';
+            refreshButton.style.display = 'inline-block';
+            
+            displayRecipes(data);
+            
+            // Set up refresh button
+            refreshButton.onclick = () => loadRecipeSuggestions(productType);
+            
+          } catch (error) {
+            console.error('Error fetching recipe suggestions:', error);
+            recipeLoading.textContent = 'Could not load recipe suggestions. Try again later.';
+          }
+        }
+  
+        function displayRecipes(data) {
+          const recipeSuggestions = document.getElementById('recipe-suggestions');
+          
+          // Clear previous suggestions
+          recipeSuggestions.innerHTML = '';
+          
+          if (!data.recipes || data.recipes.length === 0) {
+            recipeSuggestions.innerHTML = `<p>No recipe suggestions available for ${data.ingredient}.</p>`;
+            return;
+          }
+          
+          // Add each recipe
+          data.recipes.forEach(recipe => {
+            const recipeCard = document.createElement('div');
+            recipeCard.className = 'recipe-card';
+            
+            recipeCard.innerHTML = `
+              <div class="recipe-title">${recipe.title}</div>
+              <div class="recipe-description">${recipe.description}</div>
+            `;
+            
+            recipeSuggestions.appendChild(recipeCard);
+          });
         }
     </script>
 </body>

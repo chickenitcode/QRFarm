@@ -23,12 +23,14 @@ app.get('/ping', (req, res) => {
 });
 
 // Import routes
-const batchRoutes = require('./routes/batches');
-const productRoutes = require('./routes/products');
+const batchesRouter = require('./routes/batches');
+const productsRouter = require('./routes/products');
+const recipesRouter = require('./routes/recipes');
 
 // Use routes
-app.use('/api/batches', batchRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api/batches', batchesRouter);
+app.use('/api/products', productsRouter);
+app.use('/api/recipes', recipesRouter); 
 
 // Start server
 app.listen(PORT, () => {
