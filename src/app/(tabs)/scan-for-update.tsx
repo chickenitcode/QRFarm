@@ -1,9 +1,10 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { BarcodeScanningResult, Camera, CameraView } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
-import { Alert, Platform, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -12,6 +13,21 @@ import { ThemedView } from '@/components/ThemedView';
 export default function ScanForUpdateScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false);
+
+  // Add this useFocusEffect to reset scanning state when screen gets focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Scanner screen is now focused');
+      // Reset scanning state when screen comes into focus
+      setScanned(false);
+      
+      // Return cleanup function
+      return () => {
+        console.log('Scanner screen is losing focus');
+      };
+    }, [])
+  );
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -22,7 +38,17 @@ export default function ScanForUpdateScreen() {
     getCameraPermissions();
   }, []);
 
+  // Add this handler for camera readiness
+  const handleCameraReady = () => {
+    console.log('Camera is ready');
+    setIsCameraReady(true);
+  };
+
   const handleBarCodeScanned = ({ type, data }: BarcodeScanningResult) => {
+    // Only process scan if camera is ready and not already scanned
+    if (!isCameraReady || scanned) return;
+    
+    console.log('QR code scanned:', data);
     setScanned(true);
     
     // Provide haptic feedback
@@ -154,6 +180,7 @@ export default function ScanForUpdateScreen() {
             barcodeTypes: ['qr']
           }}
           onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+          onCameraReady={handleCameraReady}
           style={StyleSheet.absoluteFillObject}
         />
         <View style={styles.overlay}>
@@ -173,6 +200,22 @@ export default function ScanForUpdateScreen() {
           </ThemedView>
         </View>
       </View>
+      
+      {/* Add a manual reset button for testing */}
+      {scanned && (
+        <View style={styles.resetButtonContainer}>
+          <TouchableOpacity 
+            style={styles.resetButton}
+            onPress={() => {
+              console.log('Manually resetting scanner');
+              setScanned(false);
+              setIsCameraReady(false);
+            }}
+          >
+            <ThemedText style={styles.resetButtonText}>Scan Again</ThemedText>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -229,5 +272,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '500',
+  },
+  resetButtonContainer: {
+    position: 'absolute',
+    bottom: 100,
+    alignSelf: 'center',
+  },
+  resetButton: {
+    backgroundColor: '#0a7ea4',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  resetButtonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });

@@ -1,7 +1,7 @@
 // API client for web pages
 
 // Base URL - Replace with your actual backend URL
-const API_BASE_URL = 'http://192.168.1.246:5000'; 
+const API_BASE_URL = 'http://192.168.1.87:5000'; 
 // For production: const API_BASE_URL = 'https://your-api-domain.com';
 
 // Batch operations
@@ -38,6 +38,7 @@ export const getBatchProducts = async (batchId) => {
 // Product operations
 export const getProduct = async (productId) => {
   try {
+
     const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
     
     if (!response.ok) {
@@ -63,6 +64,22 @@ export const getAllBatches = async () => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching all batches:', error);
+    throw error;
+  }
+};
+
+// Recipe operations
+export const getRecipeSuggestions = async (ingredient) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/recipes/suggestions/${encodeURIComponent(ingredient)}`);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching recipe suggestions:', error);
     throw error;
   }
 };

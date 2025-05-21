@@ -1,7 +1,8 @@
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -46,9 +47,30 @@ export default function UpdateProductScreen() {
     details: '',
   });
 
-  useEffect(() => {
-    fetchProductData();
-  }, [productId]);
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Update product screen focused with ID:', productId);
+      
+      // Reset form state
+      setFormData({
+        actorType: '',
+        actor: '',
+        location: '',
+        details: '',
+      });
+      
+      // Reset data states
+      setProduct(null);
+      setError(null);
+      
+      // Fetch fresh data
+      fetchProductData();
+      
+      return () => {
+        // Any cleanup if needed
+      };
+    }, [productId])
+  );
 
   const fetchProductData = async () => {
     setLoading(true);

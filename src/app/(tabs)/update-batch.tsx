@@ -1,7 +1,8 @@
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -56,9 +57,32 @@ export default function UpdateBatchScreen() {
   });
 
   // Load batch data when component mounts
-  useEffect(() => {
-    fetchBatchData();
-  }, [batchId]);
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Update batch screen focused with ID:', batchId);
+      
+      // Reset form state
+      setFormData({
+        stageName: '',
+        actor: '',
+        location: '',
+        notes: '',
+        status: '',
+      });
+      
+      // Reset data states
+      setBatch(null);
+      setProducts([]);
+      setError(null);
+      
+      // Fetch fresh data
+      fetchBatchData();
+      
+      return () => {
+        // Any cleanup if needed
+      };
+    }, [batchId])
+  );
 
   // Replace the fetchBatchData function
   const fetchBatchData = async () => {
