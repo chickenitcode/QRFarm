@@ -402,7 +402,11 @@
     
     // This is the same simplified hash algorithm from create-qr.tsx
     return Array.from(dataToHash)
-        .reduce((hash, char) => hash ^ char.charCodeAt(0) + ((hash << 5) - hash), 0)
+        .reduce((hash, char) => {
+            const charCode = char.charCodeAt(0);
+            hash = (hash ^ (charCode + ((hash << 5) - hash))) | 0; // force int32
+            return hash;
+        }, 0)
         .toString(16);
     }
 

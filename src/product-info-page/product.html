@@ -539,16 +539,20 @@
             return `Processing Step ${block.blockId + 1}`;
         }
 
-        // Add this function to your validateChain function
+        // Replace this function
         function calculateHash(blockId, prevHash, data, timestamp) {
-        // Use the block's original timestamp for hash calculation
-        // This matches how the hash was originally calculated in React Native
-        const dataToHash = `${blockId}:${prevHash}:${data}:${timestamp}`;
-        
-        // This is the same simplified hash algorithm from create-qr.tsx
-        return Array.from(dataToHash)
-            .reduce((hash, char) => hash ^ char.charCodeAt(0) + ((hash << 5) - hash), 0)
-            .toString(16);
+            // Use the block's original timestamp for hash calculation
+            // This matches how the hash was originally calculated in React Native
+            const dataToHash = `${blockId}:${prevHash}:${data}:${timestamp}`;
+            
+            // This is the same simplified hash algorithm from create-qr.tsx
+            return Array.from(dataToHash)
+                .reduce((hash, char) => {
+                    const charCode = char.charCodeAt(0);
+                    hash = (hash ^ (charCode + ((hash << 5) - hash))) | 0; // force int32
+                    return hash;
+                }, 0)
+                .toString(16);
         }
 
         function validateChain(blocks) {

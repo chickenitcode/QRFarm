@@ -1,7 +1,7 @@
 // API client for web pages
 
 // Base URL - Replace with your actual backend URL
-const API_BASE_URL = 'http://192.168.1.87:5000'; 
+const API_BASE_URL = 'http://192.168.1.132:5000'; 
 // For production: const API_BASE_URL = 'https://your-api-domain.com';
 
 // Batch operations

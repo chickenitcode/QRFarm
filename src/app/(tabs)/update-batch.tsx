@@ -137,8 +137,12 @@ export default function UpdateBatchScreen() {
     const dataToHash = `${blockId}:${prevHash}:${data}:${Date.now()}`;
     // This is a simplified hash for demo. Use a proper hash function in production
     return Array.from(dataToHash)
-      .reduce((hash, char) => hash ^ char.charCodeAt(0) + ((hash << 5) - hash), 0)
-      .toString(16);
+        .reduce((hash, char) => {
+            const charCode = char.charCodeAt(0);
+            hash = (hash ^ (charCode + ((hash << 5) - hash))) | 0; // force int32
+            return hash;
+        }, 0)
+        .toString(16);
   };
 
   // Replace the handleUpdateBatch function

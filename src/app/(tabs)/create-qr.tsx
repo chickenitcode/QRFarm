@@ -46,12 +46,16 @@ export default function CreateBatchScreen() {
     setBatchData(prev => ({ ...prev, [field]: value }));
   };
 
-  const calculateHash = (blockId: number, prevHash: string | number, data: string) => {
-    const dataToHash = `${blockId}:${prevHash}:${data}:${Date.now()}`;
-    // This is a simplified hash for demo. Use a proper hash function in production
+  const calculateHash = (blockId: number, prevHash: string | number, data: string, timestamp: number) => {
+    const dataToHash = `${blockId}:${prevHash}:${data}:${timestamp}`;
+    
     return Array.from(dataToHash)
-      .reduce((hash, char) => hash ^ char.charCodeAt(0) + ((hash << 5) - hash), 0)
-      .toString(16);
+        .reduce((hash, char) => {
+            const charCode = char.charCodeAt(0);
+            hash = (hash ^ (charCode + ((hash << 5) - hash))) | 0; // force int32
+            return hash;
+        }, 0)
+        .toString(16);
   };
   
   const createBatch = () => {
@@ -73,7 +77,7 @@ export default function CreateBatchScreen() {
       };
       
       // Calculate hash for the initial block
-      const initialBlockHash = calculateHash(0, '0', JSON.stringify(initialBlockData));
+      const initialBlockHash = calculateHash(0, '0', JSON.stringify(initialBlockData), Date.now());
       
       // Create genesis block for this batch
       const genesisBlock = {

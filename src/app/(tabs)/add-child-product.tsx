@@ -185,49 +185,12 @@ export default function AddChildProductScreen() {
     const dataToHash = `${blockId}:${prevHash}:${data}:${Date.now()}`;
     // This is a simplified hash for demo. Use a proper hash function in production
     return Array.from(dataToHash)
-      .reduce((hash, char) => hash ^ char.charCodeAt(0) + ((hash << 5) - hash), 0)
-      .toString(16);
-  };
-
-  // Function to save product data to your backend
-  const saveChildProductToDatabase = (product: ChildProductData) => {
-    // In a real app, this would call your API to save to a database
-    console.log('Saving product to database:', product);
-    
-    // Example API call:
-    // fetch('https://yourapi.com/products', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(product),
-    // })
-    // .then(response => response.json())
-    // .then(data => console.log('Product saved:', data))
-    // .catch(error => console.error('Error saving product:', error));
-  };
-  
-  // Add this function to keep track of products in a batch
-  const addProductToBatch = (batchId: string, productId: string) => {
-    try {
-      // In a real app, you would call an API to update the batch
-      console.log(`Adding product ${productId} to batch ${batchId}`);
-      
-      // For demo purposes, use localStorage to track batch contents
-      if (typeof localStorage !== 'undefined') {
-        // Get current products in batch
-        const batchProductsKey = `batch_products_${batchId}`;
-        const currentProducts = JSON.parse(localStorage.getItem(batchProductsKey) || '[]');
-        
-        // Add the new product
-        currentProducts.push(productId);
-        
-        // Save back to localStorage
-        localStorage.setItem(batchProductsKey, JSON.stringify(currentProducts));
-      }
-    } catch (e) {
-      console.error('Error adding product to batch:', e);
-    }
+        .reduce((hash, char) => {
+            const charCode = char.charCodeAt(0);
+            hash = (hash ^ (charCode + ((hash << 5) - hash))) | 0; // force int32
+            return hash;
+        }, 0)
+        .toString(16);
   };
 
   const addAnotherProduct = () => {
