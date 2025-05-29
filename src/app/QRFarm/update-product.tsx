@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -194,7 +195,7 @@ export default function UpdateProductScreen() {
             'The product journey has been successfully updated.',
             [{ 
               text: 'OK', 
-              onPress: () => router.navigate('/(tabs)')
+              onPress: () => router.navigate('/QRFarm')
             }]
           );
         })
@@ -211,8 +212,9 @@ export default function UpdateProductScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ThemedView style={styles.centered}>
-          <ThemedText>Loading product data...</ThemedText>
+        <ThemedView style={styles.loadingContainer}>
+          <Ionicons name="hourglass-outline" size={40} color="#557089" />
+          <ThemedText style={styles.loadingText}>Loading product data...</ThemedText>
         </ThemedView>
       </SafeAreaView>
     );
@@ -222,11 +224,12 @@ export default function UpdateProductScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <ThemedView style={styles.centered}>
-          <ThemedText type="title" style={styles.errorTitle}>Error</ThemedText>
+          <Ionicons name="alert-circle-outline" size={48} color="#557089" />
+          <ThemedText style={styles.errorTitle}>Error</ThemedText>
           <ThemedText style={styles.errorText}>{error || 'Product not found'}</ThemedText>
           <TouchableOpacity 
-            style={styles.button} 
-            onPress={() => router.navigate('/(tabs)')}
+            style={styles.primaryButton} 
+            onPress={() => router.navigate('/QRFarm')}
           >
             <ThemedText style={styles.buttonText}>Go Back</ThemedText>
           </TouchableOpacity>
@@ -241,7 +244,8 @@ export default function UpdateProductScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}>
@@ -250,15 +254,18 @@ export default function UpdateProductScreen() {
           keyboardShouldPersistTaps="handled">
           
           <ThemedView style={styles.header}>
-            <ThemedText type="title">Update Product</ThemedText>
             <ThemedText style={styles.productId}>
-              Product ID: {productId}
+              <Ionicons name="barcode-outline" size={16} color="#557089" /> {productId}
             </ThemedText>
           </ThemedView>
           
           {/* Product summary */}
-          <ThemedView style={styles.summaryCard}>
-            <ThemedText style={styles.cardTitle}>Product Summary</ThemedText>
+          <ThemedView style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="cube-outline" size={22} color="#557089" />
+              <ThemedText style={styles.cardTitle}>Product Summary</ThemedText>
+            </View>
+            
             <View style={styles.productDetail}>
               <ThemedText style={styles.detailLabel}>Weight:</ThemedText>
               <ThemedText>{productDetails.weight} kg</ThemedText>
@@ -269,115 +276,139 @@ export default function UpdateProductScreen() {
             </View>
             <View style={styles.productDetail}>
               <ThemedText style={styles.detailLabel}>Quality:</ThemedText>
-              <ThemedText>{productDetails.quality}</ThemedText>
+              <View style={styles.qualityBadge}>
+                <ThemedText style={styles.qualityText}>{productDetails.quality}</ThemedText>
+              </View>
             </View>
             <View style={styles.productDetail}>
               <ThemedText style={styles.detailLabel}>Journey Steps:</ThemedText>
-              <ThemedText>{product.blocks.length}</ThemedText>
+              <View style={styles.stepCounter}>
+                <ThemedText style={styles.stepCountText}>{product.blocks.length}</ThemedText>
+              </View>
+            </View>
+          </ThemedView>
+          
+          {/* Timeline */}
+          <ThemedView style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="time-outline" size={22} color="#557089" />
+              <ThemedText style={styles.cardTitle}>Journey Timeline</ThemedText>
+            </View>
+            
+            <View style={styles.timeline}>
+              {product.blocks.map((block, index) => (
+                <View key={block.blockId} style={styles.timelineItem}>
+                  <View style={styles.timelineDot}>
+                    {index === 0 && <Ionicons name="leaf-outline" size={16} color="white" />}
+                    {index !== 0 && <Ionicons name="checkmark" size={16} color="white" />}
+                  </View>
+                  
+                  <View style={styles.timelineContent}>
+                    <View style={styles.timelineHeader}>
+                      <ThemedText style={styles.timelineActor}>{block.actor}</ThemedText>
+                      <ThemedText style={styles.timelineDate}>
+                        {new Date(block.timestamp).toLocaleDateString()}
+                      </ThemedText>
+                    </View>
+                    <ThemedText style={styles.timelineRole}>{block.actorType}</ThemedText>
+                    <ThemedText style={styles.timelineLocation}>
+                      <Ionicons name="location-outline" size={14} color="#557089" /> {block.location}
+                    </ThemedText>
+                  </View>
+                </View>
+              ))}
             </View>
           </ThemedView>
           
           {/* Update form */}
-          <ThemedView style={styles.formCard}>
-            <ThemedText style={styles.cardTitle}>Add to Journey</ThemedText>
+          <ThemedView style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="add-circle-outline" size={22} color="#557089" />
+              <ThemedText style={styles.cardTitle}>Add to Journey</ThemedText>
+            </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Your Role *</ThemedText>
               <View style={styles.pickerContainer}>
-                <TouchableOpacity 
-                  style={[
-                    styles.rolePill, 
-                    formData.actorType === 'importer' && styles.selectedRole
-                  ]}
-                  onPress={() => updateField('actorType', 'importer')}
-                >
-                  <ThemedText style={formData.actorType === 'importer' ? styles.selectedRoleText : {}}>
-                    Importer
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.rolePill, 
-                    formData.actorType === 'trader' && styles.selectedRole
-                  ]}
-                  onPress={() => updateField('actorType', 'trader')}
-                >
-                  <ThemedText style={formData.actorType === 'trader' ? styles.selectedRoleText : {}}>
-                    Trader
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.rolePill, 
-                    formData.actorType === 'retailer' && styles.selectedRole
-                  ]}
-                  onPress={() => updateField('actorType', 'retailer')}
-                >
-                  <ThemedText style={formData.actorType === 'retailer' ? styles.selectedRoleText : {}}>
-                    Retailer
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.rolePill, 
-                    formData.actorType === 'other' && styles.selectedRole
-                  ]}
-                  onPress={() => updateField('actorType', 'other')}
-                >
-                  <ThemedText style={formData.actorType === 'other' ? styles.selectedRoleText : {}}>
-                    Other
-                  </ThemedText>
-                </TouchableOpacity>
+                {['importer', 'trader', 'retailer', 'other'].map((role) => (
+                  <TouchableOpacity 
+                    key={role}
+                    style={[
+                      styles.rolePill, 
+                      formData.actorType === role && styles.selectedRole
+                    ]}
+                    onPress={() => updateField('actorType', role)}
+                  >
+                    <ThemedText 
+                      style={formData.actorType === role ? styles.selectedRoleText : styles.roleText}
+                    >
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Your Name/Company *</ThemedText>
-              <TextInput
-                style={styles.input}
-                value={formData.actor}
-                onChangeText={(text) => updateField('actor', text)}
-                placeholder="Enter your name or company"
-                placeholderTextColor="#999"
-              />
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={20} color="#557089" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={formData.actor}
+                  onChangeText={(text) => updateField('actor', text)}
+                  placeholder="Enter your name or company"
+                  placeholderTextColor="#8A8A8A"
+                />
+              </View>
             </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Current Location *</ThemedText>
-              <TextInput
-                style={styles.input}
-                value={formData.location}
-                onChangeText={(text) => updateField('location', text)}
-                placeholder="Enter current location"
-                placeholderTextColor="#999"
-              />
+              <View style={styles.inputWrapper}>
+                <Ionicons name="location-outline" size={20} color="#557089" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={formData.location}
+                  onChangeText={(text) => updateField('location', text)}
+                  placeholder="Enter current location"
+                  placeholderTextColor="#8A8A8A"
+                />
+              </View>
             </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Action Details *</ThemedText>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={formData.details}
-                onChangeText={(text) => updateField('details', text)}
-                placeholder="Describe what you did with the product (e.g., imported, packaged, transported)"
-                placeholderTextColor="#999"
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+              <View style={styles.textAreaWrapper}>
+                <TextInput
+                  style={styles.textArea}
+                  value={formData.details}
+                  onChangeText={(text) => updateField('details', text)}
+                  placeholder="Describe what you did with the product (e.g., imported, packaged, transported)"
+                  placeholderTextColor="#8A8A8A"
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
             </View>
           </ThemedView>
           
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
-              style={styles.button} 
+              style={styles.secondaryButton} 
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+            >
+              <ThemedText style={styles.secondaryButtonText}>Cancel</ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.primaryButton} 
               onPress={handleUpdateProduct}
               activeOpacity={0.7}
             >
-              <ThemedText style={styles.buttonText}>Update Product Journey</ThemedText>
+              <ThemedText style={styles.buttonText}>Update Journey</ThemedText>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -389,19 +420,32 @@ export default function UpdateProductScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
+  appBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#B0C756',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
-  errorTitle: {
-    marginBottom: 10,
+  backButton: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 8,
   },
-  errorText: {
-    textAlign: 'center',
-    marginBottom: 20,
+  appBarTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#557089',
+    marginLeft: 16,
   },
   keyboardAvoid: {
     flex: 1,
@@ -409,66 +453,195 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: 20,
   },
-  header: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#557089',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    gap: 12,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#557089',
+  },
+  errorText: {
+    textAlign: 'center',
     marginBottom: 20,
+    color: '#666',
+  },
+  header: {
+    marginBottom: 16,
+    backgroundColor: 'transparent',
   },
   productId: {
-    marginTop: 5,
-    opacity: 0.8,
+    fontWeight: '500',
+    color: '#557089',
+    fontSize: 16,
   },
-  summaryCard: {
-    padding: 15,
-    borderRadius: 10,
+  card: {
+    padding: 18,
+    borderRadius: 16,
     marginBottom: 20,
+    backgroundColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(176, 199, 86, 0.2)',
   },
-  formCard: {
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 15,
+    color: '#557089',
   },
   productDetail: {
     flexDirection: 'row',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   detailLabel: {
     fontWeight: 'bold',
-    width: 100,
+    width: 110,
+    color: '#557089',
+  },
+  qualityBadge: {
+    backgroundColor: 'rgba(176, 199, 86, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  qualityText: {
+    fontWeight: '600',
+    color: '#557089',
+  },
+  stepCounter: {
+    backgroundColor: '#557089',
+    height: 24,
+    width: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepCountText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  timeline: {
+    marginTop: 10,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  timelineDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#B0C756',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  timelineContent: {
+    flex: 1,
+    backgroundColor: 'rgba(176, 199, 86, 0.08)',
+    padding: 12,
+    borderRadius: 12,
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  timelineActor: {
+    fontWeight: '600',
+    color: '#557089',
+  },
+  timelineDate: {
+    fontSize: 12,
+    color: '#666',
+  },
+  timelineRole: {
+    fontSize: 14,
+    color: '#557089',
+    fontStyle: 'italic',
+    marginBottom: 4,
+    textTransform: 'capitalize',
+  },
+  timelineLocation: {
+    fontSize: 14,
+    color: '#666',
   },
   inputGroup: {
-    marginBottom: 15,
+    marginBottom: 18,
   },
   label: {
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 8,
+    color: '#557089',
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(176, 199, 86, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  inputIcon: {
+    paddingLeft: 16,
   },
   input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    padding: 15,
+    flex: 1,
+    padding: 16,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
     color: '#333',
   },
+  textAreaWrapper: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(176, 199, 86, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
   textArea: {
+    padding: 16,
+    fontSize: 16,
+    color: '#333',
     minHeight: 100,
-    paddingTop: 15,
     textAlignVertical: 'top',
   },
   pickerContainer: {
@@ -478,33 +651,59 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   rolePill: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f5f5f5',
+    borderColor: 'rgba(176, 199, 86, 0.3)',
+    backgroundColor: 'white',
+    marginBottom: 8,
   },
   selectedRole: {
-    backgroundColor: '#0a7ea4',
-    borderColor: '#0a7ea4',
+    backgroundColor: '#557089',
+    borderColor: '#557089',
+  },
+  roleText: {
+    color: '#557089',
   },
   selectedRoleText: {
     color: 'white',
     fontWeight: 'bold',
   },
   buttonContainer: {
-    marginVertical: 20,
+    flexDirection: 'row',
+    gap: 12,
+    marginVertical: 16,
   },
-  button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
+  primaryButton: {
+    flex: 2,
+    backgroundColor: '#557089',
+    borderRadius: 16,
     padding: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#557089',
   },
   buttonText: {
     color: 'white',
     fontWeight: '600',
     fontSize: 16,
   },
+  secondaryButtonText: {
+    color: '#557089',
+    fontWeight: '600',
+    fontSize: 16,
+  }
 });

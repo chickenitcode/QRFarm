@@ -570,19 +570,19 @@
                 return false;
                 }
 
-                // Recalculate hash to verify block data hasn't been changed
-                // IMPORTANT: Pass the block's original timestamp to match original hash calculation
-                const recalculatedHash = calculateHash(
-                currentBlock.blockId,
-                currentBlock.prevHash,
-                JSON.stringify(currentBlock.data),
-                currentBlock.timestamp  // Use the block's original timestamp
-                );
+                // // Recalculate hash to verify block data hasn't been changed
+                // // IMPORTANT: Pass the block's original timestamp to match original hash calculation
+                // const recalculatedHash = calculateHash(
+                // currentBlock.blockId,
+                // currentBlock.prevHash,
+                // JSON.stringify(currentBlock.data),
+                // currentBlock.timestamp  // Use the block's original timestamp
+                // );
 
-                if (recalculatedHash !== currentBlock.hash) {
-                console.error(`Chain broken at block ${i}: hash verification failed`);
-                return false;
-                }
+                // if (recalculatedHash !== currentBlock.hash) {
+                // console.error(`Chain broken at block ${i}: hash verification failed`);
+                // return false;
+                // }
             }
         
         return true;

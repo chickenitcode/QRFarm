@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -233,7 +234,7 @@ export default function UpdateBatchScreen() {
             'The batch journey has been successfully updated with secure blockchain record.',
             [{ 
               text: 'OK', 
-              onPress: () => router.navigate('/(tabs)')
+              onPress: () => router.navigate('/QRFarm')
             }]
           );
         })
@@ -250,8 +251,9 @@ export default function UpdateBatchScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ThemedView style={styles.centered}>
-          <ThemedText>Loading batch data...</ThemedText>
+        <ThemedView style={styles.loadingContainer}>
+          <Ionicons name="hourglass-outline" size={40} color="#557089" />
+          <ThemedText style={styles.loadingText}>Loading batch data...</ThemedText>
         </ThemedView>
       </SafeAreaView>
     );
@@ -261,11 +263,12 @@ export default function UpdateBatchScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <ThemedView style={styles.centered}>
-          <ThemedText type="title" style={styles.errorTitle}>Error</ThemedText>
+          <Ionicons name="alert-circle-outline" size={48} color="#557089" />
+          <ThemedText style={styles.errorTitle}>Error</ThemedText>
           <ThemedText style={styles.errorText}>{error || 'Batch not found'}</ThemedText>
           <TouchableOpacity 
-            style={styles.button} 
-            onPress={() => router.navigate('/(tabs)')}
+            style={styles.primaryButton} 
+            onPress={() => router.navigate('/QRFarm')}
           >
             <ThemedText style={styles.buttonText}>Go Back</ThemedText>
           </TouchableOpacity>
@@ -281,7 +284,8 @@ export default function UpdateBatchScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}>
@@ -289,16 +293,19 @@ export default function UpdateBatchScreen() {
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled">
           
-          <ThemedView style={styles.header}>
-            <ThemedText type="title">Update Batch</ThemedText>
+          <ThemedView style={styles.batchHeader}>
             <ThemedText style={styles.batchId}>
               Batch ID: {batchId}
             </ThemedText>
           </ThemedView>
           
           {/* Batch summary */}
-          <ThemedView style={styles.summaryCard}>
-            <ThemedText style={styles.cardTitle}>Batch Summary</ThemedText>
+          <ThemedView style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="information-circle-outline" size={22} color="#557089" />
+              <ThemedText style={styles.cardTitle}>Batch Summary</ThemedText>
+            </View>
+            
             <View style={styles.detailRow}>
               <ThemedText style={styles.detailLabel}>Product Type:</ThemedText>
               <ThemedText>{batch.productType}</ThemedText>
@@ -317,25 +324,34 @@ export default function UpdateBatchScreen() {
             </View>
             <View style={styles.detailRow}>
               <ThemedText style={styles.detailLabel}>Current Status:</ThemedText>
-              <ThemedText>{batch.status || 'In Processing'}</ThemedText>
+              <View style={styles.statusBadge}>
+                <ThemedText style={styles.statusText}>{batch.status || 'In Processing'}</ThemedText>
+              </View>
             </View>
           </ThemedView>
           
           {/* Products in batch */}
           {products.length > 0 && (
-            <ThemedView style={styles.productsCard}>
-              <ThemedText style={styles.cardTitle}>Products in Batch</ThemedText>
+            <ThemedView style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="cube-outline" size={22} color="#557089" />
+                <ThemedText style={styles.cardTitle}>Products in Batch</ThemedText>
+              </View>
+              
               {products.map((productId, index) => (
                 <View key={productId} style={styles.productItem}>
-                  <ThemedText style={styles.productId}>{productId}</ThemedText>
+                  <View style={styles.productIdContainer}>
+                    <Ionicons name="barcode-outline" size={18} color="#557089" />
+                    <ThemedText style={styles.productId}>{productId}</ThemedText>
+                  </View>
                   <TouchableOpacity 
-                    style={styles.viewButton}
+                    style={styles.updateButton}
                     onPress={() => router.navigate({
-                      pathname: '/(tabs)/update-product',
+                      pathname: '/QRFarm/update-product',
                       params: { productId }
                     })}
                   >
-                    <ThemedText style={styles.viewButtonText}>Update</ThemedText>
+                    <Ionicons name="create-outline" size={16} color="white" />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -343,183 +359,118 @@ export default function UpdateBatchScreen() {
           )}
           
           {/* Update form */}
-          <ThemedView style={styles.formCard}>
-            <ThemedText style={styles.cardTitle}>Add Journey Stage</ThemedText>
+          <ThemedView style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="trail-sign-outline" size={22} color="#557089" />
+              <ThemedText style={styles.cardTitle}>Add Journey Stage</ThemedText>
+            </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Stage Name *</ThemedText>
               <View style={styles.pickerContainer}>
-                <TouchableOpacity 
-                  style={[
-                    styles.stagePill, 
-                    formData.stageName === 'Processing' && styles.selectedStage
-                  ]}
-                  onPress={() => updateField('stageName', 'Processing')}
-                >
-                  <ThemedText style={formData.stageName === 'Processing' ? styles.selectedStageText : {}}>
-                    Processing
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.stagePill, 
-                    formData.stageName === 'Packaging' && styles.selectedStage
-                  ]}
-                  onPress={() => updateField('stageName', 'Packaging')}
-                >
-                  <ThemedText style={formData.stageName === 'Packaging' ? styles.selectedStageText : {}}>
-                    Packaging
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.stagePill, 
-                    formData.stageName === 'Transport' && styles.selectedStage
-                  ]}
-                  onPress={() => updateField('stageName', 'Transport')}
-                >
-                  <ThemedText style={formData.stageName === 'Transport' ? styles.selectedStageText : {}}>
-                    Transport
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.stagePill, 
-                    formData.stageName === 'Distribution' && styles.selectedStage
-                  ]}
-                  onPress={() => updateField('stageName', 'Distribution')}
-                >
-                  <ThemedText style={formData.stageName === 'Distribution' ? styles.selectedStageText : {}}>
-                    Distribution
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.stagePill, 
-                    formData.stageName === 'Retail' && styles.selectedStage
-                  ]}
-                  onPress={() => updateField('stageName', 'Retail')}
-                >
-                  <ThemedText style={formData.stageName === 'Retail' ? styles.selectedStageText : {}}>
-                    Retail
-                  </ThemedText>
-                </TouchableOpacity>
+                {['Processing', 'Packaging', 'Transport', 'Distribution', 'Retail'].map((stage) => (
+                  <TouchableOpacity 
+                    key={stage}
+                    style={[
+                      styles.stagePill, 
+                      formData.stageName === stage && styles.selectedStage
+                    ]}
+                    onPress={() => updateField('stageName', stage)}
+                  >
+                    <ThemedText style={formData.stageName === stage ? styles.selectedPillText : styles.pillText}>
+                      {stage}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Your Name/Company *</ThemedText>
-              <TextInput
-                style={styles.input}
-                value={formData.actor}
-                onChangeText={(text) => updateField('actor', text)}
-                placeholder="Enter your name or company"
-                placeholderTextColor="#999"
-              />
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={20} color="#557089" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={formData.actor}
+                  onChangeText={(text) => updateField('actor', text)}
+                  placeholder="Enter your name or company"
+                  placeholderTextColor="#8A8A8A"
+                />
+              </View>
             </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Current Location *</ThemedText>
-              <TextInput
-                style={styles.input}
-                value={formData.location}
-                onChangeText={(text) => updateField('location', text)}
-                placeholder="Enter current location"
-                placeholderTextColor="#999"
-              />
+              <View style={styles.inputWrapper}>
+                <Ionicons name="location-outline" size={20} color="#557089" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={formData.location}
+                  onChangeText={(text) => updateField('location', text)}
+                  placeholder="Enter current location"
+                  placeholderTextColor="#8A8A8A"
+                />
+              </View>
             </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Update Status</ThemedText>
               <View style={styles.pickerContainer}>
-                <TouchableOpacity 
-                  style={[
-                    styles.statusPill, 
-                    formData.status === 'In Processing' && styles.selectedStatus
-                  ]}
-                  onPress={() => updateField('status', 'In Processing')}
-                >
-                  <ThemedText style={formData.status === 'In Processing' ? styles.selectedStatusText : {}}>
-                    In Processing
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.statusPill, 
-                    formData.status === 'In Transport' && styles.selectedStatus
-                  ]}
-                  onPress={() => updateField('status', 'In Transport')}
-                >
-                  <ThemedText style={formData.status === 'In Transport' ? styles.selectedStatusText : {}}>
-                    In Transport
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.statusPill, 
-                    formData.status === 'At Distributor' && styles.selectedStatus
-                  ]}
-                  onPress={() => updateField('status', 'At Distributor')}
-                >
-                  <ThemedText style={formData.status === 'At Distributor' ? styles.selectedStatusText : {}}>
-                    At Distributor
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.statusPill, 
-                    formData.status === 'At Retail' && styles.selectedStatus
-                  ]}
-                  onPress={() => updateField('status', 'At Retail')}
-                >
-                  <ThemedText style={formData.status === 'At Retail' ? styles.selectedStatusText : {}}>
-                    At Retail
-                  </ThemedText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.statusPill, 
-                    formData.status === 'Delivered' && styles.selectedStatus
-                  ]}
-                  onPress={() => updateField('status', 'Delivered')}
-                >
-                  <ThemedText style={formData.status === 'Delivered' ? styles.selectedStatusText : {}}>
-                    Delivered
-                  </ThemedText>
-                </TouchableOpacity>
+                {[
+                  'In Processing', 
+                  'In Transport', 
+                  'At Distributor', 
+                  'At Retail', 
+                  'Delivered'
+                ].map((status) => (
+                  <TouchableOpacity 
+                    key={status}
+                    style={[
+                      styles.statusPill, 
+                      formData.status === status && styles.selectedStatus
+                    ]}
+                    onPress={() => updateField('status', status)}
+                  >
+                    <ThemedText style={formData.status === status ? styles.selectedPillText : styles.pillText}>
+                      {status}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
             
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Notes</ThemedText>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={formData.notes}
-                onChangeText={(text) => updateField('notes', text)}
-                placeholder="Add any additional information or notes"
-                placeholderTextColor="#999"
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+              <View style={styles.textAreaWrapper}>
+                <TextInput
+                  style={styles.textArea}
+                  value={formData.notes}
+                  onChangeText={(text) => updateField('notes', text)}
+                  placeholder="Add any additional information or notes"
+                  placeholderTextColor="#8A8A8A"
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
             </View>
           </ThemedView>
           
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
-              style={styles.button} 
+              style={styles.secondaryButton} 
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+            >
+              <ThemedText style={styles.secondaryButtonText}>Cancel</ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.primaryButton} 
               onPress={handleUpdateBatch}
               activeOpacity={0.7}
             >
-              <ThemedText style={styles.buttonText}>Update Batch Journey</ThemedText>
+              <ThemedText style={styles.buttonText}>Update Journey</ThemedText>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -531,19 +482,32 @@ export default function UpdateBatchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
+  appBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#B0C756',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
-  errorTitle: {
-    marginBottom: 10,
+  backButton: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 8,
   },
-  errorText: {
-    textAlign: 'center',
-    marginBottom: 20,
+  appBarTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#557089',
+    marginLeft: 16,
   },
   keyboardAvoid: {
     flex: 1,
@@ -551,98 +515,167 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: 20,
   },
-  header: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#557089',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    gap: 12,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#557089',
+  },
+  errorText: {
+    textAlign: 'center',
     marginBottom: 20,
+    color: '#666',
+  },
+  batchHeader: {
+    marginBottom: 16,
+    backgroundColor: 'transparent',
   },
   batchId: {
-    marginTop: 5,
-    opacity: 0.8,
+    fontWeight: '500',
+    color: '#557089',
+    fontSize: 16,
   },
-  summaryCard: {
-    padding: 15,
-    borderRadius: 10,
+  card: {
+    padding: 18,
+    borderRadius: 16,
     marginBottom: 20,
+    backgroundColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(176, 199, 86, 0.2)',
   },
-  productsCard: {
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  formCard: {
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 15,
+    color: '#557089',
   },
   detailRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   detailLabel: {
     fontWeight: 'bold',
-    width: 100,
+    width: 110,
+    color: '#557089',
+  },
+  statusBadge: {
+    backgroundColor: 'rgba(176, 199, 86, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontWeight: '500',
+    color: '#557089',
   },
   productItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: 'rgba(176, 199, 86, 0.2)',
+  },
+  productIdContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   productId: {
     fontWeight: '500',
+    color: '#557089',
   },
-  viewButton: {
-    backgroundColor: '#0a7ea4',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+  updateButton: {
+    backgroundColor: '#557089',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  viewButtonText: {
+  updateButtonText: {
     color: 'white',
     fontWeight: '500',
     fontSize: 14,
   },
   inputGroup: {
-    marginBottom: 15,
+    marginBottom: 18,
   },
   label: {
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 8,
+    color: '#557089',
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(176, 199, 86, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  inputIcon: {
+    paddingLeft: 16,
   },
   input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    padding: 15,
+    flex: 1,
+    padding: 16,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
     color: '#333',
   },
+  textAreaWrapper: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(176, 199, 86, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
   textArea: {
+    padding: 16,
+    fontSize: 16,
+    color: '#333',
     minHeight: 100,
-    paddingTop: 15,
     textAlignVertical: 'top',
   },
   pickerContainer: {
@@ -650,54 +683,74 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     gap: 10,
-    marginBottom: 10,
   },
   stagePill: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f5f5f5',
+    borderColor: 'rgba(176, 199, 86, 0.3)',
+    backgroundColor: 'white',
     marginBottom: 8,
   },
   selectedStage: {
-    backgroundColor: '#0a7ea4',
-    borderColor: '#0a7ea4',
-  },
-  selectedStageText: {
-    color: 'white',
-    fontWeight: 'bold',
+    backgroundColor: '#557089',
+    borderColor: '#557089',
   },
   statusPill: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f5f5f5',
+    borderColor: 'rgba(176, 199, 86, 0.3)',
+    backgroundColor: 'white',
     marginBottom: 8,
   },
   selectedStatus: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: '#B0C756',
+    borderColor: '#B0C756',
   },
-  selectedStatusText: {
+  pillText: {
+    color: '#557089',
+  },
+  selectedPillText: {
     color: 'white',
     fontWeight: 'bold',
   },
   buttonContainer: {
-    marginVertical: 20,
+    flexDirection: 'row',
+    gap: 12,
+    marginVertical: 16,
   },
-  button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
+  primaryButton: {
+    flex: 2,
+    backgroundColor: '#557089',
+    borderRadius: 16,
     padding: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#557089',
   },
   buttonText: {
     color: 'white',
     fontWeight: '600',
     fontSize: 16,
   },
+  secondaryButtonText: {
+    color: '#557089',
+    fontWeight: '600',
+    fontSize: 16,
+  }
 });
