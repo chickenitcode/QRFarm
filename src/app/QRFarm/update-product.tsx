@@ -268,11 +268,11 @@ export default function UpdateProductScreen() {
             
             <View style={styles.productDetail}>
               <ThemedText style={styles.detailLabel}>Weight:</ThemedText>
-              <ThemedText>{productDetails.weight} kg</ThemedText>
+              <ThemedText style={styles.qualityText}>{productDetails.weight} kg</ThemedText>
             </View>
             <View style={styles.productDetail}>
               <ThemedText style={styles.detailLabel}>Size:</ThemedText>
-              <ThemedText>{productDetails.size}</ThemedText>
+              <ThemedText style={styles.qualityText}>{productDetails.size}</ThemedText>
             </View>
             <View style={styles.productDetail}>
               <ThemedText style={styles.detailLabel}>Quality:</ThemedText>

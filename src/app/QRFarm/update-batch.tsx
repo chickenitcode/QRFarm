@@ -308,19 +308,19 @@ export default function UpdateBatchScreen() {
             
             <View style={styles.detailRow}>
               <ThemedText style={styles.detailLabel}>Product Type:</ThemedText>
-              <ThemedText>{batch.productType}</ThemedText>
+              <ThemedText style={styles.qualityText}>{batch.productType}</ThemedText>
             </View>
             <View style={styles.detailRow}>
               <ThemedText style={styles.detailLabel}>Harvest Date:</ThemedText>
-              <ThemedText>{formattedDate}</ThemedText>
+              <ThemedText style={styles.qualityText}>{formattedDate}</ThemedText>
             </View>
             <View style={styles.detailRow}>
               <ThemedText style={styles.detailLabel}>Origin:</ThemedText>
-              <ThemedText>{batch.location}</ThemedText>
+              <ThemedText style={styles.qualityText}>{batch.location}</ThemedText>
             </View>
             <View style={styles.detailRow}>
               <ThemedText style={styles.detailLabel}>Products:</ThemedText>
-              <ThemedText>{batch.quantity}</ThemedText>
+              <ThemedText style={styles.qualityText}>{batch.quantity}</ThemedText>
             </View>
             <View style={styles.detailRow}>
               <ThemedText style={styles.detailLabel}>Current Status:</ThemedText>
@@ -612,6 +612,10 @@ const styles = StyleSheet.create({
   },
   productId: {
     fontWeight: '500',
+    color: '#557089',
+  },
+  qualityText: {
+    fontWeight: '600',
     color: '#557089',
   },
   updateButton: {
