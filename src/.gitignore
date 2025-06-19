@@ -7,6 +7,15 @@ node_modules/
 .expo/
 dist/
 web-build/
+.expo-shared/
+*.jks
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.expo/
+dist/
+web-build/
 expo-env.d.ts
 
 # Native
