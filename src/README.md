@@ -4,6 +4,12 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
+Should install Expo Go for development
+
+0. For local host, change the API_BASE_URL in src/services/api.ts
+                  and the LOCAL_DEMO_BASE_URL in src/config/url.ts
+                  suitable for local host
+   -> please don't push that file if u change it
 1. Install dependencies
 
    ```bash
@@ -14,6 +20,8 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
    npx expo start
+   or
+   npx expo start --tunnel
    ```
 
 In the output, you'll find options to open the app in a
