@@ -38,7 +38,7 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-barcode-scanner"
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -46,8 +46,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "62a2c7c0-b928-4705-8b00-caaf2e1e87d9"
+        "projectId": "f1eaea17-4666-4027-a2b3-57111b1c0ac8"
       }
-    }
+    },
+    "owner": "ngcjang1803"
   }
 }
