@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL - Replace with your actual backend URL
-const API_BASE_URL = 'https://qrfarm-db.onrender.com'; // Use your computer's local IP for local testing
+const API_BASE_URL = 'http://192.168.1.18:5000'; // Use your computer's local IP for local testing
 // For production, use your deployed URL: const API_BASE_URL = 'https://your-api-domain.com/api';
 
 // Create axios instance
@@ -11,7 +11,15 @@ const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
-
+export const getProductLocation = async () => {
+  try {
+    const response = await api.get('/api/products/location');
+    return response.data; // [{ location: 'Tiền Giang', count: 5 }, ...]
+  } catch (error) {
+    console.error('Error fetching product location stats:', error);
+    throw error;
+  }
+};
 // Batch operations
 export const saveBatch = async (batchData: any) => {
   try {
