@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build:android:preview": "eas build -p android --profile preview-apk",
+    "build:android:production": "eas build -p android --profile production-apk",
+    "build:android:aab": "eas build -p android --profile production",
+    "build:status": "eas build:list",
+    "build:logs": "eas build:view"
+  }
+}
