@@ -124,3 +124,55 @@ export const testConnection = async () => {
     throw error;
   }
 };
+
+// Types for logistics data
+export interface ShipmentLog {
+  blockId: string;
+  actor: string;
+  location: string;
+  timestamp: string;
+  details: any;
+}
+
+export interface Timestamp {
+  blockId: string;
+  timestamp: string;
+  action: string;
+}
+
+export interface RegionData {
+  origin: string;
+  currentLocation: string;
+  path: string[];
+}
+
+export interface BatchLogistics {
+  batchId: string;
+  productType: string;
+  shipmentLogs: ShipmentLog[];
+  timestamps: Timestamp[];
+  regions: RegionData;
+}
+
+export interface RegionPerformance {
+  name: string;
+  score: number;
+  batches_processed: number;
+}
+
+export interface LogisticsInsights {
+  summary: {
+    total_batches: number;
+    unique_regions: number;
+    product_types: number;
+    most_common_product: string;
+  };
+  insights: string;
+  trend_analysis: string;
+  region_prediction: {
+    top_region_next_quarter: string;
+    reason: string;
+  };
+  strategic_recommendation: string;
+  region_performance: RegionPerformance[];
+}
