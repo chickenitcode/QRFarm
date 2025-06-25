@@ -36,8 +36,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create-qr"
         options={{
-          title: 'Batch',
+          title: 'Create QR',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="shippingbox.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="analysis"
+        options={{
+          title: 'Analysis',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -51,7 +58,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="scan-for-update"
         options={{
-          title: 'Update Product',
+          title: 'Update QR',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="qrcode" color={color} />,
         }}
       />
