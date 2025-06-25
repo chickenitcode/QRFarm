@@ -22,6 +22,7 @@ const MAPPING = {
   'camera.fill': 'camera-alt',
   'shippingbox.fill': 'local-shipping',
   'cart.fill': 'shopping-cart',
+  'chart.bar.fill': 'bar-chart',
 } as IconMapping;
 
 /**

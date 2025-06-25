@@ -11,7 +11,15 @@ const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
-
+export const getProductLocation = async () => {
+  try {
+    const response = await api.get('/api/products/location');
+    return response.data; // [{ location: 'Tiền Giang', count: 5 }, ...]
+  } catch (error) {
+    console.error('Error fetching product location stats:', error);
+    throw error;
+  }
+};
 // Batch operations
 export const saveBatch = async (batchData: any) => {
   try {
