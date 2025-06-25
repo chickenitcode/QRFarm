@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // Base URL - Replace with your actual backend URL
-const API_BASE_URL = 'https://qrfarm-db.onrender.com'; // Use your computer's local IP for local testing
-//const API_BASE_URL = 'http://192.168.1.75:5000';
+const API_BASE_URL = 'http://192.168.1.18:5000'; // Use your computer's local IP for local testing
+// For production, use your deployed URL: const API_BASE_URL = 'https://your-api-domain.com/api';
 
 // Create axios instance
 const api = axios.create({
@@ -11,7 +11,15 @@ const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
-
+export const getProductLocation = async () => {
+  try {
+    const response = await api.get('/api/products/location');
+    return response.data; // [{ location: 'Tiền Giang', count: 5 }, ...]
+  } catch (error) {
+    console.error('Error fetching product location stats:', error);
+    throw error;
+  }
+};
 // Batch operations
 export const saveBatch = async (batchData: any) => {
   try {
@@ -84,27 +92,6 @@ export const addProductBlock = async (productId: string, blockData: any) => {
   }
 };
 
-// Logistics operations
-export const getBatchLogistics = async (batchId: string) => {
-  try {
-    const response = await api.get(`/api/logistics/batch/${batchId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching batch logistics:', error);
-    throw error;
-  }
-};
-
-export const getLogisticsInsightsSummary = async () => {
-  try {
-    const response = await api.get('/api/logistics/insights/summary');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching logistics insights summary:', error);
-    throw error;
-  }
-};
-
 // Test connection
 export const testConnection = async () => {
   try {
@@ -116,55 +103,3 @@ export const testConnection = async () => {
     throw error;
   }
 };
-
-// Types for logistics data
-export interface ShipmentLog {
-  blockId: string;
-  actor: string;
-  location: string;
-  timestamp: string;
-  details: any;
-}
-
-export interface Timestamp {
-  blockId: string;
-  timestamp: string;
-  action: string;
-}
-
-export interface RegionData {
-  origin: string;
-  currentLocation: string;
-  path: string[];
-}
-
-export interface BatchLogistics {
-  batchId: string;
-  productType: string;
-  shipmentLogs: ShipmentLog[];
-  timestamps: Timestamp[];
-  regions: RegionData;
-}
-
-export interface RegionPerformance {
-  name: string;
-  score: number;
-  batches_processed: number;
-}
-
-export interface LogisticsInsights {
-  summary: {
-    total_batches: number;
-    unique_regions: number;
-    product_types: number;
-    most_common_product: string;
-  };
-  insights: string;
-  trend_analysis: string;
-  region_prediction: {
-    top_region_next_quarter: string;
-    reason: string;
-  };
-  strategic_recommendation: string;
-  region_performance: RegionPerformance[];
-}
