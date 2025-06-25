@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // Base URL - Replace with your actual backend URL
-//const API_BASE_URL = 'https://qrfarm-db.onrender.com'; // Use your computer's local IP for local testing
-const API_BASE_URL = 'http://192.168.1.75:5000';
+const API_BASE_URL = 'https://qrfarm-db.onrender.com'; // Use your computer's local IP for local testing
+//const API_BASE_URL = 'http://192.168.1.75:5000';
 
 // Create axios instance
 const api = axios.create({
