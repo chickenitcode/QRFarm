@@ -526,7 +526,7 @@ export default function AddChildProductScreen() {
                 
                 <TouchableOpacity 
                   style={styles.homeButton} 
-                  onPress={() => router.navigate('/QRFarm')}
+                  onPress={() => router.navigate('/QRFarm/create-qr')}
                 >
                   <Ionicons name="home-outline" size={20} color="white" style={styles.buttonIcon} />
                   <ThemedText style={styles.buttonText}>Go Home</ThemedText>

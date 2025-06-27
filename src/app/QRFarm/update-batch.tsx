@@ -234,7 +234,7 @@ export default function UpdateBatchScreen() {
             'The batch journey has been successfully updated with secure blockchain record.',
             [{ 
               text: 'OK', 
-              onPress: () => router.navigate('/QRFarm')
+              onPress: () => router.navigate('/QRFarm/create-qr')
             }]
           );
         })
@@ -268,7 +268,7 @@ export default function UpdateBatchScreen() {
           <ThemedText style={styles.errorText}>{error || 'Batch not found'}</ThemedText>
           <TouchableOpacity 
             style={styles.primaryButton} 
-            onPress={() => router.navigate('/QRFarm')}
+            onPress={() => router.navigate('/QRFarm/create-qr')}
           >
             <ThemedText style={styles.buttonText}>Go Back</ThemedText>
           </TouchableOpacity>

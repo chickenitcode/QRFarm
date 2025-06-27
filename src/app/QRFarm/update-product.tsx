@@ -195,7 +195,7 @@ export default function UpdateProductScreen() {
             'The product journey has been successfully updated.',
             [{ 
               text: 'OK', 
-              onPress: () => router.navigate('/QRFarm')
+              onPress: () => router.navigate('/QRFarm/create-qr')
             }]
           );
         })
@@ -229,7 +229,7 @@ export default function UpdateProductScreen() {
           <ThemedText style={styles.errorText}>{error || 'Product not found'}</ThemedText>
           <TouchableOpacity 
             style={styles.primaryButton} 
-            onPress={() => router.navigate('/QRFarm')}
+            onPress={() => router.navigate('/QRFarm/create-qr')}
           >
             <ThemedText style={styles.buttonText}>Go Back</ThemedText>
           </TouchableOpacity>
