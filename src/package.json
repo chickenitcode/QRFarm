@@ -12,7 +12,13 @@
     "build:android:preview": "eas build -p android --profile preview-apk",
     "build:android:production": "eas build -p android --profile production-apk",
     "build:android:aab": "eas build -p android --profile production",
-    "build:status": "eas build:list"
+    "build:status": "eas build:list",
+    "blockchain:install": "cd ../blockchain && npm install",
+    "blockchain:build": "cd ../blockchain && npm run build",
+    "blockchain:start": "cd ../blockchain && npm start",
+    "blockchain:dev": "cd ../blockchain && npm run start:dev",
+    "setup:all": "npm install && npm run blockchain:install && npm run blockchain:build",
+    "dev:all": "concurrently \"npm run blockchain:dev\" \"npm start\""
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
