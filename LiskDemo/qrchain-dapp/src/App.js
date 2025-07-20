@@ -1,6 +1,5 @@
 import logo from './logo.svg';
 import './App.css';
-import { useState, useEffect } from 'react';
 import { useContract } from './hooks/useContract';
 import { useWallet } from './hooks/useWallet';
 import ProductHistory from './components/ProductHistory';
@@ -8,7 +7,7 @@ import RoleActions from './components/RoleActions';
 
 function App() {
   const { walletAddress, isConnected, isLoading, connectWallet, disconnectWallet } = useWallet();
-  const { contract, userRole, isContractLoading, contractAddress } = useContract(walletAddress, isConnected);
+  const { contract, userRole, isContractLoading, contractAddress, triggerRoleRefresh } = useContract(walletAddress, isConnected);
 
   // Get role name function
   function getRoleName(role) {
@@ -83,6 +82,7 @@ function App() {
             contract={contract} 
             userRole={userRole} 
             walletAddress={walletAddress} 
+            onRoleUpdate={triggerRoleRefresh}
           />
         )}
 

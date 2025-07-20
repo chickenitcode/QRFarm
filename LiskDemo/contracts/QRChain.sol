@@ -111,13 +111,14 @@ contract QRChain {
     
     /**
      * @dev Assigns a role to a user address
-     * @param user Address to assign role to
+     * @param user Address to assign role to (must be msg.sender for self-assignment)
      * @param role Role to assign (FARMER, TRANSPORTER, RETAILER)
-     * @notice Only contract owner can assign roles
+     * @notice Users can assign roles to themselves, or owner can assign to others
      */
-    function assignRole(address user, Role role) public onlyOwner {
+    function assignRole(address user, Role role) public {
         require(user != address(0), "Cannot assign role to zero address");
         require(role != Role.NONE, "Cannot assign NONE role");
+        require(user == msg.sender || msg.sender == owner, "Can only assign role to yourself or owner can assign to others");
         
         Role previousRole = userRoles[user];
         userRoles[user] = role;

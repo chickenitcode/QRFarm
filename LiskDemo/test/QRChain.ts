@@ -19,10 +19,10 @@ describe("QRChain", function () {
     const QRChainFactory = await ethers.getContractFactory("QRChain");
     qrChain = await QRChainFactory.connect(owner).deploy();
 
-    // Assign roles to users
-    await qrChain.connect(owner).assignRole(farmer.address, 1); // Role.FARMER
-    await qrChain.connect(owner).assignRole(transporter.address, 2); // Role.TRANSPORTER
-    await qrChain.connect(owner).assignRole(retailer.address, 3); // Role.RETAILER
+    // Assign roles to users - can use either owner assignment or self-assignment
+    await qrChain.connect(owner).assignRole(farmer.address, 1); // Role.FARMER (owner assigns)
+    await qrChain.connect(transporter).assignRole(transporter.address, 2); // Role.TRANSPORTER (self-assigns)
+    await qrChain.connect(retailer).assignRole(retailer.address, 3); // Role.RETAILER (self-assigns)
   });
 
   describe("Deployment", function () {
@@ -50,10 +50,53 @@ describe("QRChain", function () {
         .withArgs(otherAccount.address, 1, owner.address);
     });
 
-    it("Should prevent non-owner from assigning roles", async function () {
+    it("Should prevent non-owner from assigning roles to others", async function () {
       await expect(
         qrChain.connect(farmer).assignRole(otherAccount.address, 1)
-      ).to.be.revertedWith("Only contract owner can perform this action");
+      ).to.be.revertedWith("Can only assign role to yourself or owner can assign to others");
+    });
+
+    it("Should allow users to assign roles to themselves", async function () {
+      // Test that a user can assign a role to themselves
+      await expect(qrChain.connect(otherAccount).assignRole(otherAccount.address, 2))
+        .to.emit(qrChain, "RoleAssigned")
+        .withArgs(otherAccount.address, 2, otherAccount.address);
+    
+      expect(await qrChain.getUserRole(otherAccount.address)).to.equal(2); // Role.TRANSPORTER
+    });
+
+    it("Should allow users to change their own roles", async function () {
+      // User assigns farmer role to themselves
+      await qrChain.connect(otherAccount).assignRole(otherAccount.address, 1); // Role.FARMER
+      expect(await qrChain.getUserRole(otherAccount.address)).to.equal(1);
+    
+      // User changes to transporter role
+      await qrChain.connect(otherAccount).assignRole(otherAccount.address, 2); // Role.TRANSPORTER
+      expect(await qrChain.getUserRole(otherAccount.address)).to.equal(2);
+    });
+
+    it("Should emit both RoleAssigned and RoleRevoked events when changing roles", async function () {
+      // First assign a role
+      await qrChain.connect(otherAccount).assignRole(otherAccount.address, 1); // Role.FARMER
+    
+      // Then change the role - should emit both events
+      await expect(qrChain.connect(otherAccount).assignRole(otherAccount.address, 2))
+        .to.emit(qrChain, "RoleAssigned")
+        .withArgs(otherAccount.address, 2, otherAccount.address)
+        .and.to.emit(qrChain, "RoleRevoked")
+        .withArgs(otherAccount.address, 1, otherAccount.address);
+    });
+
+    it("Should prevent assigning NONE role", async function () {
+      await expect(
+        qrChain.connect(otherAccount).assignRole(otherAccount.address, 0) // Role.NONE
+      ).to.be.revertedWith("Cannot assign NONE role");
+    });
+
+    it("Should prevent assigning role to zero address", async function () {
+      await expect(
+        qrChain.connect(owner).assignRole("0x0000000000000000000000000000000000000000", 1)
+      ).to.be.revertedWith("Cannot assign role to zero address");
     });
 
     it("Should revoke roles correctly", async function () {
@@ -80,7 +123,7 @@ describe("QRChain", function () {
 
       await expect(qrChain.connect(farmer).createProduct(qrCode, initStatus))
         .to.emit(qrChain, "ProductCreated")
-        .withArgs(1, qrCode, farmer.address, initStatus, await ethers.provider.getBlock("latest").then(b => b!.timestamp + 1));
+        .withArgs(1, qrCode, farmer.address, initStatus, await ethers.provider.getBlock("latest").then(b => b!.timestamp+1));
 
       expect(await qrChain.productCounter()).to.equal(1);
       expect(await qrChain.getTotalProducts()).to.equal(1);
@@ -382,21 +425,34 @@ describe("QRChain", function () {
       ).to.be.revertedWith("Only retailers can perform this action");
     });
 
-    it("Should handle role changes correctly", async function () {
-      // Create product as farmer
-      await qrChain.connect(farmer).createProduct("QR123", "Test");
+    it("Should allow users to self-assign roles and then perform actions", async function () {
+      // User without role assigns farmer role to themselves
+      await qrChain.connect(otherAccount).assignRole(otherAccount.address, 1); // Role.FARMER
+    
+      // Should now be able to create products
+      await expect(
+        qrChain.connect(otherAccount).createProduct("QR123", "Test")
+      ).to.not.be.reverted;
+    });
 
-      // Change farmer to transporter role
-      await qrChain.connect(owner).assignRole(farmer.address, 2); // Role.TRANSPORTER
+    it("Should handle role changes correctly", async function () {
+      // User assigns farmer role to themselves
+      await qrChain.connect(otherAccount).assignRole(otherAccount.address, 1); // Role.FARMER
+    
+      // Create product as farmer
+      await qrChain.connect(otherAccount).createProduct("QR123", "Test");
+
+      // Change to transporter role
+      await qrChain.connect(otherAccount).assignRole(otherAccount.address, 2); // Role.TRANSPORTER
 
       // Should no longer be able to create products
       await expect(
-        qrChain.connect(farmer).createProduct("QR456", "Test2")
+        qrChain.connect(otherAccount).createProduct("QR456", "Test2")
       ).to.be.revertedWith("Only farmers can perform this action");
 
       // But should be able to update locations
       await expect(
-        qrChain.connect(farmer).updateProductLocation(1, "New Location", "In Transit")
+        qrChain.connect(otherAccount).updateProductLocation(1, "New Location", "In Transit")
       ).to.not.be.reverted;
     });
   });
@@ -436,6 +492,56 @@ describe("QRChain", function () {
 
       const history = await qrChain.getProductHistory(1);
       expect(history[0].status).to.equal(specialStatus);
+    });
+  });
+
+  describe("Self-Service Role Assignment", function () {
+    it("Should allow new users to join the supply chain by self-assigning roles", async function () {
+      // Simulate a new farmer joining
+      const newFarmer = otherAccount;
+      
+      // User assigns farmer role to themselves
+      await expect(qrChain.connect(newFarmer).assignRole(newFarmer.address, 1))
+        .to.emit(qrChain, "RoleAssigned")
+        .withArgs(newFarmer.address, 1, newFarmer.address);
+      
+      // Verify they can now create products
+      await expect(qrChain.connect(newFarmer).createProduct("QR_NEW_FARMER", "Fresh Harvest"))
+        .to.emit(qrChain, "ProductCreated");
+    });
+
+    it("Should handle role transitions in the supply chain", async function () {
+      const user = otherAccount;
+      
+      // Start as farmer
+      await qrChain.connect(user).assignRole(user.address, 1); // Role.FARMER
+      await qrChain.connect(user).createProduct("QR_TRANSITION_TEST", "Harvested");
+      
+      // Transition to transporter
+      await qrChain.connect(user).assignRole(user.address, 2); // Role.TRANSPORTER
+      await qrChain.connect(user).updateProductLocation(1, "Warehouse", "In Transit");
+      
+      // Transition to retailer
+      await qrChain.connect(user).assignRole(user.address, 3); // Role.RETAILER
+      await qrChain.connect(user).updateProductStatus(1, "Received at Store");
+      
+      // Verify complete history shows same user in different roles
+      const history = await qrChain.getProductHistory(1);
+      expect(history.length).to.equal(3);
+      expect(history[0].actor).to.equal(user.address); // As farmer
+      expect(history[1].actor).to.equal(user.address); // As transporter  
+      expect(history[2].actor).to.equal(user.address); // As retailer
+    });
+
+    it("Should maintain owner's administrative privileges", async function () {
+      // Owner should still be able to assign roles to others
+      await expect(qrChain.connect(owner).assignRole(otherAccount.address, 2))
+        .to.emit(qrChain, "RoleAssigned")
+        .withArgs(otherAccount.address, 2, owner.address);
+      
+      // Owner should still be able to revoke roles
+      await expect(qrChain.connect(owner).revokeRole(otherAccount.address))
+        .to.emit(qrChain, "RoleRevoked");
     });
   });
 });
